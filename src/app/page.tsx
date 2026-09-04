@@ -1,15 +1,8 @@
-import styles from "./page.module.css";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 
-export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <div className={styles.intro}>
-          <span className={styles.mark}>▲</span>
-          <h1>GreyHub</h1>
-          <p>Work orders, crews and payouts in one place.</p>
-        </div>
-      </main>
-    </div>
-  );
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  redirect((await getCurrentUser()) ? "/dashboard" : "/login");
 }

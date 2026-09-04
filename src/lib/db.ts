@@ -21,6 +21,11 @@ db.pragma("foreign_keys = ON");
 db.pragma("journal_mode = WAL");
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS app_meta (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
@@ -157,19 +162,25 @@ db.exec(`
 `);
 
 function seedDatabase() {
-  const userCount = db.prepare("SELECT COUNT(*) AS count FROM users").get() as { count: number };
-  if (userCount.count > 0) return;
-
   const seed = db.transaction(() => {
-    const roleInsert = db.prepare("INSERT INTO roles (name, permissions) VALUES (?, ?)");
-    const adminRole = Number(roleInsert.run("Admin", JSON.stringify(["admin", "manage_orders", "review_orders", "manage_users"])).lastInsertRowid);
-    roleInsert.run("Manager", JSON.stringify(["manage_orders", "review_orders", "manage_users"]));
-    const employeeRole = Number(roleInsert.run("Employee", "[]").lastInsertRowid);
+    const claimed = db.prepare("INSERT OR IGNORE INTO app_meta (key, value) VALUES ('demo_seed', '1')").run();
+    if (claimed.changes === 0) return;
 
-    const userInsert = db.prepare("INSERT INTO users (username, password_hash, completed_orders, money_earned) VALUES (?, ?, ?, ?)");
-    const adminId = Number(userInsert.run("admin", bcrypt.hashSync("greyhub", 10), 0, 0).lastInsertRowid);
-    const alexId = Number(userInsert.run("alex", bcrypt.hashSync("trail123", 10), 1, 145).lastInsertRowid);
-    const rowanId = Number(userInsert.run("rowan", bcrypt.hashSync("trail123", 10), 1, 95).lastInsertRowid);
+    const roleInsert = db.prepare("INSERT OR IGNORE INTO roles (name, permissions) VALUES (?, ?)");
+    roleInsert.run("Admin", JSON.stringify(["admin", "manage_orders", "review_orders", "manage_users"]));
+    roleInsert.run("Manager", JSON.stringify(["manage_orders", "review_orders", "manage_users"]));
+    roleInsert.run("Employee", "[]");
+    const adminRole = (db.prepare("SELECT id FROM roles WHERE name = 'Admin'").get() as { id: number }).id;
+    const employeeRole = (db.prepare("SELECT id FROM roles WHERE name = 'Employee'").get() as { id: number }).id;
+
+    const userInsert = db.prepare("INSERT OR IGNORE INTO users (username, password_hash, completed_orders, money_earned) VALUES (?, ?, ?, ?)");
+    userInsert.run("admin", bcrypt.hashSync("greyhub", 10), 0, 0);
+    userInsert.run("alex", bcrypt.hashSync("trail123", 10), 1, 145);
+    userInsert.run("rowan", bcrypt.hashSync("trail123", 10), 1, 95);
+    const getUserId = db.prepare("SELECT id FROM users WHERE username = ?");
+    const adminId = (getUserId.get("admin") as { id: number }).id;
+    const alexId = (getUserId.get("alex") as { id: number }).id;
+    const rowanId = (getUserId.get("rowan") as { id: number }).id;
 
     const assignRole = db.prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
     assignRole.run(adminId, adminRole);
