@@ -4,7 +4,9 @@ export function money(value: number) {
 
 export function shortDate(value: string | null) {
   if (!value) return "—";
-  return new Date(value.replace(" ", "T") + (value.includes("Z") ? "" : "Z")).toLocaleDateString("en-GB", {
+  return new Date(
+    value.replace(" ", "T") + (value.includes("Z") ? "" : "Z"),
+  ).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -12,7 +14,9 @@ export function shortDate(value: string | null) {
 }
 
 export function timeAgo(value: string) {
-  const date = new Date(value.replace(" ", "T") + (value.includes("Z") ? "" : "Z"));
+  const date = new Date(
+    value.replace(" ", "T") + (value.includes("Z") ? "" : "Z"),
+  );
   const seconds = Math.round((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return "just now";
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
@@ -21,5 +25,7 @@ export function timeAgo(value: string) {
 }
 
 export function titleCase(value: string) {
-  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return value
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

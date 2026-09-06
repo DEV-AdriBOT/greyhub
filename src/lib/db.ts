@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import fs from "node:fs";
 import path from "node:path";
 
-const databasePath = process.env.DATABASE_PATH || path.join(process.cwd(), "data", "greyhub.db");
+const databasePath =
+  process.env.DATABASE_PATH || path.join(process.cwd(), "data", "greyhub.db");
 
 if (databasePath !== ":memory:") {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
@@ -163,17 +164,44 @@ db.exec(`
 
 function seedDatabase() {
   const seed = db.transaction(() => {
-    const claimed = db.prepare("INSERT OR IGNORE INTO app_meta (key, value) VALUES ('demo_seed', '1')").run();
+    const claimed = db
+      .prepare(
+        "INSERT OR IGNORE INTO app_meta (key, value) VALUES ('demo_seed', '1')",
+      )
+      .run();
     if (claimed.changes === 0) return;
 
-    const roleInsert = db.prepare("INSERT OR IGNORE INTO roles (name, permissions) VALUES (?, ?)");
-    roleInsert.run("Admin", JSON.stringify(["admin", "manage_orders", "review_orders", "manage_users"]));
-    roleInsert.run("Manager", JSON.stringify(["manage_orders", "review_orders", "manage_users"]));
+    const roleInsert = db.prepare(
+      "INSERT OR IGNORE INTO roles (name, permissions) VALUES (?, ?)",
+    );
+    roleInsert.run(
+      "Admin",
+      JSON.stringify([
+        "admin",
+        "manage_orders",
+        "review_orders",
+        "manage_users",
+      ]),
+    );
+    roleInsert.run(
+      "Manager",
+      JSON.stringify(["manage_orders", "review_orders", "manage_users"]),
+    );
     roleInsert.run("Employee", "[]");
-    const adminRole = (db.prepare("SELECT id FROM roles WHERE name = 'Admin'").get() as { id: number }).id;
-    const employeeRole = (db.prepare("SELECT id FROM roles WHERE name = 'Employee'").get() as { id: number }).id;
+    const adminRole = (
+      db.prepare("SELECT id FROM roles WHERE name = 'Admin'").get() as {
+        id: number;
+      }
+    ).id;
+    const employeeRole = (
+      db.prepare("SELECT id FROM roles WHERE name = 'Employee'").get() as {
+        id: number;
+      }
+    ).id;
 
-    const userInsert = db.prepare("INSERT OR IGNORE INTO users (username, password_hash, completed_orders, money_earned) VALUES (?, ?, ?, ?)");
+    const userInsert = db.prepare(
+      "INSERT OR IGNORE INTO users (username, password_hash, completed_orders, money_earned) VALUES (?, ?, ?, ?)",
+    );
     userInsert.run("admin", bcrypt.hashSync("greyhub", 10), 0, 0);
     userInsert.run("alex", bcrypt.hashSync("trail123", 10), 1, 145);
     userInsert.run("rowan", bcrypt.hashSync("trail123", 10), 1, 95);
@@ -182,7 +210,9 @@ function seedDatabase() {
     const alexId = (getUserId.get("alex") as { id: number }).id;
     const rowanId = (getUserId.get("rowan") as { id: number }).id;
 
-    const assignRole = db.prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
+    const assignRole = db.prepare(
+      "INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)",
+    );
     assignRole.run(adminId, adminRole);
     assignRole.run(alexId, employeeRole);
     assignRole.run(rowanId, employeeRole);
@@ -191,24 +221,98 @@ function seedDatabase() {
       INSERT INTO orders (title, description, client_name, reward, created_by, status, team_type, max_workers, notes)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    orderInsert.run("Stone supply run", "Gather and deliver 18 stacks of smooth stone to the north depot.", "Northbridge Works", 120, adminId, "available", "dual", 2, "Use labelled barrels by bay 3.");
-    orderInsert.run("Spruce lodge roof", "Finish the spruce and dark oak roof on the lakeside lodge.", "Pine & Co.", 220, adminId, "available", "team", 4, "Materials are already on site.");
-    orderInsert.run("Trail lantern restock", "Replace missing lanterns along the western mountain trail.", "Grey County", 70, adminId, "available", "solo", 1, "Start from marker W-12.");
+    orderInsert.run(
+      "Stone supply run",
+      "Gather and deliver 18 stacks of smooth stone to the north depot.",
+      "Northbridge Works",
+      120,
+      adminId,
+      "available",
+      "dual",
+      2,
+      "Use labelled barrels by bay 3.",
+    );
+    orderInsert.run(
+      "Spruce lodge roof",
+      "Finish the spruce and dark oak roof on the lakeside lodge.",
+      "Pine & Co.",
+      220,
+      adminId,
+      "available",
+      "team",
+      4,
+      "Materials are already on site.",
+    );
+    orderInsert.run(
+      "Trail lantern restock",
+      "Replace missing lanterns along the western mountain trail.",
+      "Grey County",
+      70,
+      adminId,
+      "available",
+      "solo",
+      1,
+      "Start from marker W-12.",
+    );
 
-    const activeOrder = Number(orderInsert.run("Quarry retaining wall", "Build the marked retaining wall using deepslate bricks.", "Red Peak Mining", 180, adminId, "in_progress", "dual", 2, "Follow the wool outline.").lastInsertRowid);
-    db.prepare("INSERT INTO order_workers (order_id, user_id, approved_by) VALUES (?, ?, ?)").run(activeOrder, alexId, adminId);
+    const activeOrder = Number(
+      orderInsert.run(
+        "Quarry retaining wall",
+        "Build the marked retaining wall using deepslate bricks.",
+        "Red Peak Mining",
+        180,
+        adminId,
+        "in_progress",
+        "dual",
+        2,
+        "Follow the wool outline.",
+      ).lastInsertRowid,
+    );
+    db.prepare(
+      "INSERT INTO order_workers (order_id, user_id, approved_by) VALUES (?, ?, ?)",
+    ).run(activeOrder, alexId, adminId);
 
-    const completedOrder = Number(orderInsert.run("Station platform repair", "Replace damaged platform slabs and safety rails.", "Greyline Rail", 240, adminId, "completed", "dual", 2, "Reviewed in game.").lastInsertRowid);
-    db.prepare("UPDATE orders SET completion_date = datetime('now', '-2 days'), payment_status = 'paid' WHERE id = ?").run(completedOrder);
-    const addWorker = db.prepare("INSERT INTO order_workers (order_id, user_id, approved_by) VALUES (?, ?, ?)");
+    const completedOrder = Number(
+      orderInsert.run(
+        "Station platform repair",
+        "Replace damaged platform slabs and safety rails.",
+        "Greyline Rail",
+        240,
+        adminId,
+        "completed",
+        "dual",
+        2,
+        "Reviewed in game.",
+      ).lastInsertRowid,
+    );
+    db.prepare(
+      "UPDATE orders SET completion_date = datetime('now', '-2 days'), payment_status = 'paid' WHERE id = ?",
+    ).run(completedOrder);
+    const addWorker = db.prepare(
+      "INSERT INTO order_workers (order_id, user_id, approved_by) VALUES (?, ?, ?)",
+    );
     addWorker.run(completedOrder, alexId, adminId);
     addWorker.run(completedOrder, rowanId, adminId);
-    const paymentId = Number(db.prepare("INSERT INTO payments (order_id, amount, paid_at, note, recorded_by) VALUES (?, ?, datetime('now', '-1 day'), ?, ?)").run(completedOrder, 240, "Paid in game", adminId).lastInsertRowid);
-    db.prepare("INSERT INTO payment_splits (payment_id, user_id, amount) VALUES (?, ?, ?)").run(paymentId, alexId, 145);
-    db.prepare("INSERT INTO payment_splits (payment_id, user_id, amount) VALUES (?, ?, ?)").run(paymentId, rowanId, 95);
+    const paymentId = Number(
+      db
+        .prepare(
+          "INSERT INTO payments (order_id, amount, paid_at, note, recorded_by) VALUES (?, ?, datetime('now', '-1 day'), ?, ?)",
+        )
+        .run(completedOrder, 240, "Paid in game", adminId).lastInsertRowid,
+    );
+    db.prepare(
+      "INSERT INTO payment_splits (payment_id, user_id, amount) VALUES (?, ?, ?)",
+    ).run(paymentId, alexId, 145);
+    db.prepare(
+      "INSERT INTO payment_splits (payment_id, user_id, amount) VALUES (?, ?, ?)",
+    ).run(paymentId, rowanId, 95);
 
-    db.prepare("INSERT INTO activity_logs (actor_id, action, order_id, details) VALUES (?, 'order_created', ?, ?)").run(adminId, activeOrder, "Quarry retaining wall");
-    db.prepare("INSERT INTO activity_logs (actor_id, action, order_id, details) VALUES (?, 'order_completed', ?, ?)").run(adminId, completedOrder, "Station platform repair");
+    db.prepare(
+      "INSERT INTO activity_logs (actor_id, action, order_id, details) VALUES (?, 'order_created', ?, ?)",
+    ).run(adminId, activeOrder, "Quarry retaining wall");
+    db.prepare(
+      "INSERT INTO activity_logs (actor_id, action, order_id, details) VALUES (?, 'order_completed', ?, ?)",
+    ).run(adminId, completedOrder, "Station platform repair");
   });
 
   seed();
@@ -217,15 +321,23 @@ function seedDatabase() {
 
 seedDatabase();
 
-export type Permission = "admin" | "manage_orders" | "review_orders" | "manage_users";
+export type Permission =
+  | "admin"
+  | "manage_orders"
+  | "review_orders"
+  | "manage_users";
 
 export function hasPermission(userId: number, permission: Permission) {
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT roles.permissions
     FROM roles
     JOIN user_roles ON user_roles.role_id = roles.id
     WHERE user_roles.user_id = ?
-  `).all(userId) as { permissions: string }[];
+  `,
+    )
+    .all(userId) as { permissions: string }[];
 
   return rows.some((row) => {
     const permissions = JSON.parse(row.permissions) as string[];
@@ -233,16 +345,34 @@ export function hasPermission(userId: number, permission: Permission) {
   });
 }
 
-export function addActivity(actorId: number | null, action: string, options: { orderId?: number; userId?: number; details?: string } = {}) {
-  db.prepare(`
+export function addActivity(
+  actorId: number | null,
+  action: string,
+  options: { orderId?: number; userId?: number; details?: string } = {},
+) {
+  db.prepare(
+    `
     INSERT INTO activity_logs (actor_id, action, order_id, user_id, details)
     VALUES (?, ?, ?, ?, ?)
-  `).run(actorId, action, options.orderId ?? null, options.userId ?? null, options.details ?? "");
+  `,
+  ).run(
+    actorId,
+    action,
+    options.orderId ?? null,
+    options.userId ?? null,
+    options.details ?? "",
+  );
 }
 
-export function addNotification(userId: number, type: string, message: string, link?: string) {
-  db.prepare("INSERT INTO notifications (user_id, type, message, link) VALUES (?, ?, ?, ?)")
-    .run(userId, type, message, link ?? null);
+export function addNotification(
+  userId: number,
+  type: string,
+  message: string,
+  link?: string,
+) {
+  db.prepare(
+    "INSERT INTO notifications (user_id, type, message, link) VALUES (?, ?, ?, ?)",
+  ).run(userId, type, message, link ?? null);
 }
 
 export function orderCode(id: number) {
