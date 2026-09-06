@@ -31,27 +31,25 @@ describe("GreyHub database", () => {
     }
   });
 
-  it("seeds a small working development set", () => {
+  it("starts with only the admin account", () => {
     expect(
       (
         database.prepare("SELECT COUNT(*) count FROM users").get() as {
           count: number;
         }
       ).count,
-    ).toBe(3);
+    ).toBe(1);
     expect(
       (
         database.prepare("SELECT COUNT(*) count FROM orders").get() as {
           count: number;
         }
       ).count,
-    ).toBe(5);
+    ).toBe(0);
     expect(
       (
         database
-          .prepare(
-            "SELECT COUNT(*) count FROM orders WHERE status = 'completed'",
-          )
+          .prepare("SELECT COUNT(*) count FROM roles WHERE name = 'Admin'")
           .get() as { count: number }
       ).count,
     ).toBe(1);

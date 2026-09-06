@@ -15,26 +15,25 @@ cp .env.example .env
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The SQLite database and demo records are created automatically on first run.
+Open [http://localhost:3000](http://localhost:3000). The SQLite database and admin account are created automatically on first run.
 
 ## Environment
 
-| Variable         | Default             | Purpose                                           |
-| ---------------- | ------------------- | ------------------------------------------------- |
-| `DATABASE_PATH`  | `./data/greyhub.db` | SQLite database file                              |
-| `ADMIN_PASSWORD` | `greyhub`           | Password used when the demo admin is first seeded |
+| Variable         | Default                | Purpose                                       |
+| ---------------- | ---------------------- | --------------------------------------------- |
+| `DATABASE_PATH`  | `./data/greyhub.db`    | SQLite database file                          |
+| `ADMIN_PASSWORD` | `greyhub`              | Password used when the admin is first created |
+| `SESSION_SECRET` | Development-only value | Secret used to sign 90-day login sessions     |
 
 Profile pictures and proof images are stored under `public/uploads` during development. Keep that directory persistent when deploying, or replace it with object storage later.
 
-## Development accounts
+## Development account
 
 | Username | Password   | Access   |
 | -------- | ---------- | -------- |
 | `admin`  | `greyhub`  | Admin    |
-| `alex`   | `trail123` | Employee |
-| `rowan`  | `trail123` | Employee |
 
-Change these passwords before using the site with real data.
+Change the password before using the site with real data.
 
 ## Checks
 

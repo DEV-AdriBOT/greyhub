@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { db, hasPermission, type Permission } from "@/lib/db";
 
 const COOKIE_NAME = "greyhub_session";
-const SESSION_DAYS = 14;
+const SESSION_DAYS = 90;
 
 export type CurrentUser = {
   id: number;
@@ -21,21 +21,54 @@ export type CurrentUser = {
   permissions: string[];
 };
 
-function tokenHash(token: string) {
-  return crypto.createHash("sha256").update(token).digest("hex");
+function sessionSecret() {
+  return (
+    process.env.SESSION_SECRET ||
+    process.env.ADMIN_PASSWORD ||
+    "greyhub-development-session"
+  );
+}
+
+function signSession(userId: number, expiresAt: number) {
+  const payload = `${userId}.${expiresAt}`;
+  const signature = crypto
+    .createHmac("sha256", sessionSecret())
+    .update(payload)
+    .digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+function readSession(token: string) {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const [userIdValue, expiresValue, signature] = parts;
+  const userId = Number(userIdValue);
+  const expiresAt = Number(expiresValue);
+  if (!Number.isInteger(userId) || !Number.isInteger(expiresAt) || !signature) {
+    return null;
+  }
+
+  const payload = `${userId}.${expiresAt}`;
+  const expected = crypto
+    .createHmac("sha256", sessionSecret())
+    .update(payload)
+    .digest("base64url");
+  const actualBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (
+    actualBuffer.length !== expectedBuffer.length ||
+    !crypto.timingSafeEqual(actualBuffer, expectedBuffer) ||
+    expiresAt <= Date.now()
+  ) {
+    return null;
+  }
+
+  return userId;
 }
 
 export async function createSession(userId: number) {
-  const token = crypto.randomBytes(32).toString("hex");
   const expires = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-
-  db.prepare(
-    "DELETE FROM sessions WHERE expires_at <= CURRENT_TIMESTAMP",
-  ).run();
-  const databaseExpiry = expires.toISOString().replace("T", " ").slice(0, 19);
-  db.prepare(
-    "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)",
-  ).run(tokenHash(token), userId, databaseExpiry);
+  const token = signSession(userId, expires.getTime());
 
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
@@ -49,12 +82,6 @@ export async function createSession(userId: number) {
 
 export async function destroySession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (token) {
-    db.prepare("DELETE FROM sessions WHERE token_hash = ?").run(
-      tokenHash(token),
-    );
-  }
   cookieStore.delete(COOKIE_NAME);
 }
 
@@ -71,17 +98,18 @@ export async function authenticate(username: string, password: string) {
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
+  const userId = readSession(token);
+  if (!userId) return null;
 
   const user = db
     .prepare(
       `
     SELECT users.*
-    FROM sessions
-    JOIN users ON users.id = sessions.user_id
-    WHERE sessions.token_hash = ? AND sessions.expires_at > CURRENT_TIMESTAMP
+    FROM users
+    WHERE users.id = ?
   `,
     )
-    .get(tokenHash(token)) as
+    .get(userId) as
     | Omit<CurrentUser, "roles" | "permissions">
     | undefined;
 

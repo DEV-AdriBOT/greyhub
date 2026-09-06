@@ -165,15 +165,8 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sessions_token_expiry ON sessions(token_hash, expires_at);
 `);
 
-function seedDatabase() {
-  const seed = db.transaction(() => {
-    const claimed = db
-      .prepare(
-        "INSERT OR IGNORE INTO app_meta (key, value) VALUES ('demo_seed', '1')",
-      )
-      .run();
-    if (claimed.changes === 0) return;
-
+function ensureAdminAccount() {
+  const setup = db.transaction(() => {
     const roleInsert = db.prepare(
       "INSERT OR IGNORE INTO roles (name, permissions) VALUES (?, ?)",
     );
@@ -186,18 +179,8 @@ function seedDatabase() {
         "manage_users",
       ]),
     );
-    roleInsert.run(
-      "Manager",
-      JSON.stringify(["manage_orders", "review_orders", "manage_users"]),
-    );
-    roleInsert.run("Employee", "[]");
     const adminRole = (
       db.prepare("SELECT id FROM roles WHERE name = 'Admin'").get() as {
-        id: number;
-      }
-    ).id;
-    const employeeRole = (
-      db.prepare("SELECT id FROM roles WHERE name = 'Employee'").get() as {
         id: number;
       }
     ).id;
@@ -211,123 +194,20 @@ function seedDatabase() {
       0,
       0,
     );
-    userInsert.run("alex", bcrypt.hashSync("trail123", 10), 1, 145);
-    userInsert.run("rowan", bcrypt.hashSync("trail123", 10), 1, 95);
     const getUserId = db.prepare("SELECT id FROM users WHERE username = ?");
     const adminId = (getUserId.get("admin") as { id: number }).id;
-    const alexId = (getUserId.get("alex") as { id: number }).id;
-    const rowanId = (getUserId.get("rowan") as { id: number }).id;
 
     const assignRole = db.prepare(
-      "INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)",
+      "INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)",
     );
     assignRole.run(adminId, adminRole);
-    assignRole.run(alexId, employeeRole);
-    assignRole.run(rowanId, employeeRole);
-
-    const orderInsert = db.prepare(`
-      INSERT INTO orders (title, description, client_name, reward, created_by, status, team_type, max_workers, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    orderInsert.run(
-      "Stone supply run",
-      "Gather and deliver 18 stacks of smooth stone to the north depot.",
-      "Northbridge Works",
-      120,
-      adminId,
-      "available",
-      "dual",
-      2,
-      "Use labelled barrels by bay 3.",
-    );
-    orderInsert.run(
-      "Spruce lodge roof",
-      "Finish the spruce and dark oak roof on the lakeside lodge.",
-      "Pine & Co.",
-      220,
-      adminId,
-      "available",
-      "team",
-      4,
-      "Materials are already on site.",
-    );
-    orderInsert.run(
-      "Trail lantern restock",
-      "Replace missing lanterns along the western mountain trail.",
-      "Grey County",
-      70,
-      adminId,
-      "available",
-      "solo",
-      1,
-      "Start from marker W-12.",
-    );
-
-    const activeOrder = Number(
-      orderInsert.run(
-        "Quarry retaining wall",
-        "Build the marked retaining wall using deepslate bricks.",
-        "Red Peak Mining",
-        180,
-        adminId,
-        "in_progress",
-        "dual",
-        2,
-        "Follow the wool outline.",
-      ).lastInsertRowid,
-    );
-    db.prepare(
-      "INSERT INTO order_workers (order_id, user_id, approved_by) VALUES (?, ?, ?)",
-    ).run(activeOrder, alexId, adminId);
-
-    const completedOrder = Number(
-      orderInsert.run(
-        "Station platform repair",
-        "Replace damaged platform slabs and safety rails.",
-        "Greyline Rail",
-        240,
-        adminId,
-        "completed",
-        "dual",
-        2,
-        "Reviewed in game.",
-      ).lastInsertRowid,
-    );
-    db.prepare(
-      "UPDATE orders SET completion_date = datetime('now', '-2 days'), payment_status = 'paid' WHERE id = ?",
-    ).run(completedOrder);
-    const addWorker = db.prepare(
-      "INSERT INTO order_workers (order_id, user_id, approved_by) VALUES (?, ?, ?)",
-    );
-    addWorker.run(completedOrder, alexId, adminId);
-    addWorker.run(completedOrder, rowanId, adminId);
-    const paymentId = Number(
-      db
-        .prepare(
-          "INSERT INTO payments (order_id, amount, paid_at, note, recorded_by) VALUES (?, ?, datetime('now', '-1 day'), ?, ?)",
-        )
-        .run(completedOrder, 240, "Paid in game", adminId).lastInsertRowid,
-    );
-    db.prepare(
-      "INSERT INTO payment_splits (payment_id, user_id, amount) VALUES (?, ?, ?)",
-    ).run(paymentId, alexId, 145);
-    db.prepare(
-      "INSERT INTO payment_splits (payment_id, user_id, amount) VALUES (?, ?, ?)",
-    ).run(paymentId, rowanId, 95);
-
-    db.prepare(
-      "INSERT INTO activity_logs (actor_id, action, order_id, details) VALUES (?, 'order_created', ?, ?)",
-    ).run(adminId, activeOrder, "Quarry retaining wall");
-    db.prepare(
-      "INSERT INTO activity_logs (actor_id, action, order_id, details) VALUES (?, 'order_completed', ?, ?)",
-    ).run(adminId, completedOrder, "Station platform repair");
   });
 
-  seed();
+  setup();
   db.pragma("optimize");
 }
 
-seedDatabase();
+ensureAdminAccount();
 
 export type Permission =
   | "admin"
