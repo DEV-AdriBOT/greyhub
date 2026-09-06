@@ -14,6 +14,7 @@ import {
 } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { crewLimit, orderStatusAfterAbandon, shouldSuspend } from "@/lib/rules";
+import { uploadDirectory, uploadUrl } from "@/lib/uploads";
 
 const statusPaths = [
   "/dashboard",
@@ -333,12 +334,12 @@ export async function submitProof(orderId: number, formData: FormData) {
   if (files.some((file) => !allowed[file.type] || file.size > 5 * 1024 * 1024))
     redirect(`/orders/${orderId}?error=Proofs+must+be+images+under+5MB`);
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "proofs");
+  const uploadDir = uploadDirectory("proofs");
   await fs.mkdir(uploadDir, { recursive: true });
   for (const file of files) {
     const filename = `${crypto.randomUUID()}${allowed[file.type]}`;
     await fs.writeFile(
-      path.join(uploadDir, filename),
+      path.join(/*turbopackIgnore: true*/ uploadDir, filename),
       Buffer.from(await file.arrayBuffer()),
     );
     db.prepare(
@@ -346,7 +347,7 @@ export async function submitProof(orderId: number, formData: FormData) {
     ).run(
       orderId,
       user.id,
-      `/uploads/proofs/${filename}`,
+      uploadUrl("proofs", filename),
       file.name.slice(0, 200),
     );
   }

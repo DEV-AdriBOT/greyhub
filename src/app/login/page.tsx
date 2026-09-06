@@ -22,7 +22,9 @@ export default async function LoginPage() {
           Sign in to pick up orders and report completed work.
         </p>
         <LoginForm />
-        <p className="login-note">Development: admin / greyhub</p>
+        {process.env.NODE_ENV === "development" && (
+          <p className="login-note">Development: admin / greyhub</p>
+        )}
       </section>
       <aside className="login-scenery" aria-hidden="true">
         <div className="trail-sign">

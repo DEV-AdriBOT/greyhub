@@ -4,7 +4,10 @@ import fs from "node:fs";
 import path from "node:path";
 
 const databasePath =
-  process.env.DATABASE_PATH || path.join(process.cwd(), "data", "greyhub.db");
+  process.env.DATABASE_PATH ||
+  (process.env.VERCEL
+    ? path.join("/tmp", "greyhub.db")
+    : path.join(process.cwd(), "data", "greyhub.db"));
 
 if (databasePath !== ":memory:") {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
@@ -202,7 +205,12 @@ function seedDatabase() {
     const userInsert = db.prepare(
       "INSERT OR IGNORE INTO users (username, password_hash, completed_orders, money_earned) VALUES (?, ?, ?, ?)",
     );
-    userInsert.run("admin", bcrypt.hashSync("greyhub", 10), 0, 0);
+    userInsert.run(
+      "admin",
+      bcrypt.hashSync(process.env.ADMIN_PASSWORD || "greyhub", 10),
+      0,
+      0,
+    );
     userInsert.run("alex", bcrypt.hashSync("trail123", 10), 1, 145);
     userInsert.run("rowan", bcrypt.hashSync("trail123", 10), 1, 95);
     const getUserId = db.prepare("SELECT id FROM users WHERE username = ?");

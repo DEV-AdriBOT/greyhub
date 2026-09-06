@@ -19,9 +19,10 @@ Open [http://localhost:3000](http://localhost:3000). The SQLite database and dem
 
 ## Environment
 
-| Variable        | Default             | Purpose              |
-| --------------- | ------------------- | -------------------- |
-| `DATABASE_PATH` | `./data/greyhub.db` | SQLite database file |
+| Variable         | Default             | Purpose                                           |
+| ---------------- | ------------------- | ------------------------------------------------- |
+| `DATABASE_PATH`  | `./data/greyhub.db` | SQLite database file                              |
+| `ADMIN_PASSWORD` | `greyhub`           | Password used when the demo admin is first seeded |
 
 Profile pictures and proof images are stored under `public/uploads` during development. Keep that directory persistent when deploying, or replace it with object storage later.
 
@@ -42,3 +43,7 @@ npm run check
 ```
 
 For a production-style local run, use `npm run build` followed by `npm start`.
+
+## Vercel
+
+GreyHub can run as a Vercel preview with temporary SQLite and upload storage. This is suitable for demonstration only: Vercel Functions can replace their temporary filesystem at any time. Before using the app with real company data, connect a managed relational database and Vercel Blob, or another object store, so orders, sessions, payments, and images remain durable.
