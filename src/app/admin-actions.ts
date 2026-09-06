@@ -63,6 +63,12 @@ export async function createUser(formData: FormData) {
         .prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)")
         .run(username, bcrypt.hashSync(password, 10)).lastInsertRowid,
     );
+    if (process.env.VERCEL) {
+      db.prepare("UPDATE users SET profile_image = ? WHERE id = ?").run(
+        `/api/uploads/profiles/user-${id}`,
+        id,
+      );
+    }
     if (roleId)
       db.prepare(
         "INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE id = ?",

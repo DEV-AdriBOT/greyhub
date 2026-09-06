@@ -1,8 +1,6 @@
 "use server";
 
 import crypto from "node:crypto";
-import fs from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -14,7 +12,7 @@ import {
 } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { crewLimit, orderStatusAfterAbandon, shouldSuspend } from "@/lib/rules";
-import { uploadDirectory, uploadUrl } from "@/lib/uploads";
+import { saveUpload } from "@/lib/uploads";
 
 const statusPaths = [
   "/dashboard",
@@ -334,20 +332,15 @@ export async function submitProof(orderId: number, formData: FormData) {
   if (files.some((file) => !allowed[file.type] || file.size > 5 * 1024 * 1024))
     redirect(`/orders/${orderId}?error=Proofs+must+be+images+under+5MB`);
 
-  const uploadDir = uploadDirectory("proofs");
-  await fs.mkdir(uploadDir, { recursive: true });
   for (const file of files) {
     const filename = `${crypto.randomUUID()}${allowed[file.type]}`;
-    await fs.writeFile(
-      path.join(/*turbopackIgnore: true*/ uploadDir, filename),
-      Buffer.from(await file.arrayBuffer()),
-    );
+    const imageUrl = await saveUpload("proofs", filename, file);
     db.prepare(
       "INSERT INTO proof_images (order_id, user_id, path, original_name) VALUES (?, ?, ?, ?)",
     ).run(
       orderId,
       user.id,
-      uploadUrl("proofs", filename),
+      imageUrl,
       file.name.slice(0, 200),
     );
   }

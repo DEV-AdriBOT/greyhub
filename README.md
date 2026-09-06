@@ -19,11 +19,12 @@ Open [http://localhost:3000](http://localhost:3000). The SQLite database and adm
 
 ## Environment
 
-| Variable         | Default                | Purpose                                       |
-| ---------------- | ---------------------- | --------------------------------------------- |
-| `DATABASE_PATH`  | `./data/greyhub.db`    | SQLite database file                          |
-| `ADMIN_PASSWORD` | `greyhub`              | Password used when the admin is first created |
-| `SESSION_SECRET` | Development-only value | Secret used to sign 90-day login sessions     |
+| Variable                | Default                | Purpose                                       |
+| ----------------------- | ---------------------- | --------------------------------------------- |
+| `DATABASE_PATH`         | `./data/greyhub.db`    | SQLite database file                          |
+| `ADMIN_PASSWORD`        | `greyhub`              | Password used when the admin is first created |
+| `SESSION_SECRET`        | Development-only value | Secret used to sign 90-day login sessions     |
+| `BLOB_READ_WRITE_TOKEN` | —                      | Added automatically by Vercel Blob            |
 
 Profile pictures and proof images are stored under `public/uploads` during development. Keep that directory persistent when deploying, or replace it with object storage later.
 
@@ -45,4 +46,4 @@ For a production-style local run, use `npm run build` followed by `npm start`.
 
 ## Vercel
 
-GreyHub can run as a Vercel preview with temporary SQLite and upload storage. This is suitable for demonstration only: Vercel Functions can replace their temporary filesystem at any time. Before using the app with real company data, connect a managed relational database and Vercel Blob, or another object store, so orders, sessions, payments, and images remain durable.
+GreyHub uses a connected private Vercel Blob store for profile pictures and proof images. SQLite still runs from temporary storage on Vercel, so orders, users, payments and chat messages are suitable for demonstration only until a managed relational database is connected.

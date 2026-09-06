@@ -209,6 +209,12 @@ function ensureAdminAccount() {
       "INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)",
     );
     assignRole.run(adminId, adminRole);
+
+    if (process.env.VERCEL) {
+      db.prepare(
+        "UPDATE users SET profile_image = '/api/uploads/profiles/user-' || id",
+      ).run();
+    }
   });
 
   setup();
