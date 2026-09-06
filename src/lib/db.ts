@@ -157,12 +157,20 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(status, created_at);
   CREATE INDEX IF NOT EXISTS idx_order_workers_user_active ON order_workers(user_id, abandoned_at);
   CREATE INDEX IF NOT EXISTS idx_join_requests_order_status ON join_requests(order_id, status);
   CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read_at);
   CREATE INDEX IF NOT EXISTS idx_activity_created ON activity_logs(created_at);
   CREATE INDEX IF NOT EXISTS idx_sessions_token_expiry ON sessions(token_hash, expires_at);
+  CREATE INDEX IF NOT EXISTS idx_chat_messages_created ON chat_messages(created_at);
 `);
 
 function ensureAdminAccount() {

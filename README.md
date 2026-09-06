@@ -1,6 +1,6 @@
 # GreyHub
 
-GreyHub is a private work and order tracker for a Minecraft company. Employees can claim work, form crews, submit image proof and track their record. Managers review completed work, manage accounts and roles, and record payments made outside the site.
+GreyHub is a private work and order tracker for a Minecraft company. Employees can claim work, form crews, chat, submit image proof and track their record. Managers review completed work, manage accounts and roles, and record payments made outside the site.
 
 ## Requirements
 

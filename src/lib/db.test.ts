@@ -26,6 +26,7 @@ describe("GreyHub database", () => {
       "notifications",
       "activity_logs",
       "sessions",
+      "chat_messages",
     ]) {
       expect(names).toContain(table);
     }
@@ -53,5 +54,17 @@ describe("GreyHub database", () => {
           .get() as { count: number }
       ).count,
     ).toBe(1);
+  });
+
+  it("stores and reads crew chat messages", async () => {
+    const { createChatMessage, recentChatMessages } = await import("./chat");
+    const admin = database
+      .prepare("SELECT id FROM users WHERE username = 'admin'")
+      .get() as { id: number };
+
+    const created = createChatMessage(admin.id, "Radio check");
+    expect(created.username).toBe("admin");
+    expect(created.body).toBe("Radio check");
+    expect(recentChatMessages()).toEqual([created]);
   });
 });
