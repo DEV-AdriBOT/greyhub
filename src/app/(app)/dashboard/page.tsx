@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { StatusPill } from "@/components/status-pill";
+import { SiteAd } from "@/components/site-ad";
+import { listAds } from "@/lib/ads";
 import { db, hasPermission, orderCode } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { money, shortDate, timeAgo, titleCase } from "@/lib/format";
@@ -20,6 +22,7 @@ export default async function DashboardPage() {
   const manager =
     hasPermission(user.id, "manage_orders") ||
     hasPermission(user.id, "review_orders");
+  const ads = await listAds(true);
 
   const available = db
     .prepare(
@@ -110,6 +113,14 @@ export default async function DashboardPage() {
           </Link>
         )}
       </div>
+
+      {ads.length > 0 && (
+        <section className="dashboard-ads" aria-label="Company notices">
+          {ads.slice(0, 3).map((ad) => (
+            <SiteAd ad={ad} key={ad.id} />
+          ))}
+        </section>
+      )}
 
       <section className="metric-strip" aria-label="Summary">
         <div>

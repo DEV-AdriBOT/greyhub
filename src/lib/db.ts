@@ -164,6 +164,18 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS ads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL DEFAULT '',
+    image_path TEXT,
+    link_url TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(status, created_at);
   CREATE INDEX IF NOT EXISTS idx_order_workers_user_active ON order_workers(user_id, abandoned_at);
   CREATE INDEX IF NOT EXISTS idx_join_requests_order_status ON join_requests(order_id, status);
@@ -171,6 +183,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_activity_created ON activity_logs(created_at);
   CREATE INDEX IF NOT EXISTS idx_sessions_token_expiry ON sessions(token_hash, expires_at);
   CREATE INDEX IF NOT EXISTS idx_chat_messages_created ON chat_messages(created_at);
+  CREATE INDEX IF NOT EXISTS idx_ads_active_created ON ads(is_active, created_at);
 `);
 
 function ensureAdminAccount() {

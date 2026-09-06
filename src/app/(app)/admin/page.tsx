@@ -55,9 +55,14 @@ export default async function AdminPage({
           <h1>Admin</h1>
           <p>Users, permissions, reviews and the payment ledger.</p>
         </div>
-        <Link className="button" href="/admin/roles">
-          Manage roles
-        </Link>
+        <div className="heading-actions">
+          <Link className="button" href="/admin/ads">
+            Banners &amp; notices
+          </Link>
+          <Link className="button" href="/admin/roles">
+            Manage roles
+          </Link>
+        </div>
       </div>
       {query.notice && (
         <div className="flash flash-success">{query.notice}</div>

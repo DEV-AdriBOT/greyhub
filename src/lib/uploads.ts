@@ -1,8 +1,8 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 
-export type UploadKind = "profiles" | "proofs";
+export type UploadKind = "profiles" | "proofs" | "ads";
 
 export function uploadDirectory(kind: UploadKind) {
   if (process.env.VERCEL) {
@@ -41,4 +41,24 @@ export async function saveUpload(
     Buffer.from(await file.arrayBuffer()),
   );
   return uploadUrl(kind, filename);
+}
+
+export async function deleteUpload(fileUrl: string | null) {
+  if (!fileUrl) return;
+  const match = fileUrl.match(
+    /^\/(?:api\/)?uploads\/(profiles|proofs|ads)\/([a-zA-Z0-9.-]+)$/,
+  );
+  if (!match) return;
+  const [, kind, filename] = match;
+
+  if (process.env.VERCEL) {
+    await del(`${kind}/${filename}`, {
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    });
+    return;
+  }
+
+  await fs
+    .unlink(path.join(uploadDirectory(kind as UploadKind), filename))
+    .catch(() => undefined);
 }

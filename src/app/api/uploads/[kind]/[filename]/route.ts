@@ -25,7 +25,7 @@ export async function GET(
 
   const { kind, filename } = await params;
   if (
-    !["profiles", "proofs"].includes(kind) ||
+    !["profiles", "proofs", "ads"].includes(kind) ||
     path.basename(filename) !== filename ||
     !/^(?:[a-f0-9-]+\.(?:jpe?g|png|webp|gif)|user-\d+)$/i.test(filename)
   ) {

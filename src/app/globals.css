@@ -238,6 +238,10 @@ a {
   justify-content: space-between;
   gap: 20px;
 }
+.heading-actions {
+  display: flex;
+  gap: 10px;
+}
 .eyebrow {
   color: var(--moss);
   font-size: 0.67rem;
@@ -1620,6 +1624,106 @@ select:focus {
   font-size: 0.67rem;
 }
 
+.dashboard-ads {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.site-ad-link {
+  display: block;
+}
+.site-ad {
+  min-height: 112px;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.site-ad.has-image {
+  display: grid;
+  grid-template-columns: minmax(230px, 38%) minmax(0, 1fr);
+}
+.site-ad > img {
+  width: 100%;
+  height: 100%;
+  min-height: 150px;
+  max-height: 220px;
+  object-fit: cover;
+}
+.site-ad-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 22px 26px;
+}
+.site-ad.text-only .site-ad-copy {
+  min-height: 112px;
+  border-left: 4px solid var(--moss);
+}
+.site-ad-copy small {
+  margin-bottom: 8px;
+  color: var(--moss);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.site-ad-copy strong {
+  font-family: Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+.site-ad-copy p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.site-ad-copy span {
+  margin-top: 12px;
+  color: var(--paper);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.site-ad-link:hover .site-ad {
+  border-color: var(--moss-dark);
+}
+.ad-admin-grid {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.ad-admin-grid > .board-section {
+  position: sticky;
+  top: 84px;
+}
+.ad-admin-list {
+  display: grid;
+  gap: 16px;
+}
+.ad-admin-item {
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+}
+.ad-admin-item > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 3px 0;
+}
+.ad-admin-item > footer > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ad-admin-item footer small {
+  color: var(--faint);
+  font-size: 0.67rem;
+}
+
 @media (max-width: 980px) {
   .app-shell {
     grid-template-columns: 200px minmax(0, 1fr);
@@ -1664,6 +1768,12 @@ select:focus {
   }
   .roles-grid {
     grid-template-columns: 1fr;
+  }
+  .ad-admin-grid {
+    grid-template-columns: 1fr;
+  }
+  .ad-admin-grid > .board-section {
+    position: static;
   }
 }
 @media (max-width: 720px) {
@@ -1725,6 +1835,10 @@ select:focus {
   .heading-with-action {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .heading-actions {
+    width: 100%;
+    flex-wrap: wrap;
   }
   .metric-strip {
     grid-template-columns: 1fr 1fr;
@@ -1842,5 +1956,19 @@ select:focus {
   }
   .chat-status small {
     display: none;
+  }
+  .site-ad.has-image {
+    grid-template-columns: 1fr;
+  }
+  .site-ad > img {
+    min-height: 0;
+    aspect-ratio: 16 / 6;
+  }
+  .site-ad-copy {
+    padding: 18px;
+  }
+  .ad-admin-item > footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

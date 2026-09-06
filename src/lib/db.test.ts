@@ -27,6 +27,7 @@ describe("GreyHub database", () => {
       "activity_logs",
       "sessions",
       "chat_messages",
+      "ads",
     ]) {
       expect(names).toContain(table);
     }
@@ -66,5 +67,28 @@ describe("GreyHub database", () => {
     expect(created.username).toBe("admin");
     expect(created.body).toBe("Radio check");
     expect(recentChatMessages()).toEqual([created]);
+  });
+
+  it("creates and manages dashboard banners", async () => {
+    const { createAdRecord, deleteAdRecord, listAds, toggleAdRecord } =
+      await import("./ads");
+    const admin = database
+      .prepare("SELECT id FROM users WHERE username = 'admin'")
+      .get() as { id: number };
+
+    const adId = await createAdRecord(
+      {
+        title: "Crew meeting",
+        body: "Meet at the north depot.",
+        image_path: null,
+        link_url: "/orders",
+      },
+      admin.id,
+    );
+    expect((await listAds(true))[0].title).toBe("Crew meeting");
+    await toggleAdRecord(adId);
+    expect(await listAds(true)).toEqual([]);
+    await deleteAdRecord(adId);
+    expect(await listAds()).toEqual([]);
   });
 });
