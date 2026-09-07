@@ -86,6 +86,53 @@ export async function createAdRecord(
   return String(result.lastInsertRowid);
 }
 
+export async function getAdRecord(adId: string) {
+  if (process.env.VERCEL) {
+    return (await blobAds()).find((ad) => ad.id === adId) ?? null;
+  }
+
+  const row = db
+    .prepare("SELECT * FROM ads WHERE id = ?")
+    .get(Number(adId)) as
+    | (Omit<Ad, "id" | "is_active"> & { id: number; is_active: number })
+    | undefined;
+  if (!row) return null;
+  return { ...row, id: String(row.id), is_active: Boolean(row.is_active) };
+}
+
+export async function updateAdRecord(
+  adId: string,
+  values: Pick<Ad, "title" | "body" | "image_path" | "link_url">,
+) {
+  if (process.env.VERCEL) {
+    const ads = await blobAds();
+    const ad = ads.find((item) => item.id === adId);
+    if (!ad) return null;
+    const previousImage = ad.image_path;
+    Object.assign(ad, values, { updated_at: new Date().toISOString() });
+    await saveBlobAds(ads);
+    return { ad, previousImage };
+  }
+
+  const ad = await getAdRecord(adId);
+  if (!ad) return null;
+  db.prepare(
+    `UPDATE ads
+     SET title = ?, body = ?, image_path = ?, link_url = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`,
+  ).run(
+    values.title,
+    values.body,
+    values.image_path,
+    values.link_url,
+    Number(adId),
+  );
+  return {
+    ad: { ...ad, ...values, updated_at: new Date().toISOString() },
+    previousImage: ad.image_path,
+  };
+}
+
 export async function toggleAdRecord(adId: string) {
   if (process.env.VERCEL) {
     const ads = await blobAds();

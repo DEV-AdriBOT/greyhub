@@ -1707,6 +1707,34 @@ select:focus {
   background: var(--panel);
   border: 1px solid var(--line-soft);
 }
+.ad-edit {
+  margin-top: 12px;
+  border: 1px solid var(--line-soft);
+}
+.ad-edit summary {
+  padding: 11px 13px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  list-style-position: inside;
+}
+.ad-edit[open] summary {
+  border-bottom: 1px solid var(--line-soft);
+}
+.ad-edit form {
+  padding: 14px;
+}
+.ad-edit .check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ad-edit .check-row input {
+  width: 15px;
+  min-height: 15px;
+  accent-color: var(--moss);
+}
 .ad-admin-item > footer {
   display: flex;
   align-items: center;

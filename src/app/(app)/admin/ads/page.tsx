@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createAd, deleteAd, toggleAd } from "@/app/ad-actions";
+import { createAd, deleteAd, toggleAd, updateAd } from "@/app/ad-actions";
 import { ConfirmAction } from "@/components/confirm-action";
 import { SiteAd } from "@/components/site-ad";
 import { StatusPill } from "@/components/status-pill";
@@ -81,6 +81,53 @@ export default async function AdsPage({
           {ads.map((ad) => (
             <article className="ad-admin-item" key={ad.id}>
               <SiteAd ad={ad} />
+              <details className="ad-edit">
+                <summary>Edit banner</summary>
+                <form action={updateAd.bind(null, ad.id)} className="stack-form">
+                  <label>
+                    Title
+                    <input
+                      name="title"
+                      maxLength={100}
+                      defaultValue={ad.title}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Text
+                    <textarea
+                      name="body"
+                      maxLength={500}
+                      defaultValue={ad.body}
+                      placeholder="Optional when an image is included"
+                    />
+                  </label>
+                  <label>
+                    Replace image
+                    <input
+                      name="banner_image"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                    />
+                  </label>
+                  {ad.image_path && (
+                    <label className="check-row">
+                      <input name="remove_image" type="checkbox" />
+                      Remove current image
+                    </label>
+                  )}
+                  <label>
+                    Link
+                    <input
+                      name="link_url"
+                      maxLength={500}
+                      defaultValue={ad.link_url ?? ""}
+                      placeholder="/orders or https://example.com"
+                    />
+                  </label>
+                  <button className="button primary">Save changes</button>
+                </form>
+              </details>
               <footer>
                 <div>
                   <StatusPill status={ad.is_active ? "active" : "inactive"} />

@@ -70,8 +70,13 @@ describe("GreyHub database", () => {
   });
 
   it("creates and manages dashboard banners", async () => {
-    const { createAdRecord, deleteAdRecord, listAds, toggleAdRecord } =
-      await import("./ads");
+    const {
+      createAdRecord,
+      deleteAdRecord,
+      listAds,
+      toggleAdRecord,
+      updateAdRecord,
+    } = await import("./ads");
     const admin = database
       .prepare("SELECT id FROM users WHERE username = 'admin'")
       .get() as { id: number };
@@ -86,6 +91,17 @@ describe("GreyHub database", () => {
       admin.id,
     );
     expect((await listAds(true))[0].title).toBe("Crew meeting");
+    await updateAdRecord(adId, {
+      title: "Updated meeting",
+      body: "Meet at the south depot.",
+      image_path: null,
+      link_url: "/dashboard",
+    });
+    expect((await listAds(true))[0]).toMatchObject({
+      title: "Updated meeting",
+      body: "Meet at the south depot.",
+      link_url: "/dashboard",
+    });
     await toggleAdRecord(adId);
     expect(await listAds(true)).toEqual([]);
     await deleteAdRecord(adId);
