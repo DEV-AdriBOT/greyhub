@@ -13,9 +13,7 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
-  const canManage =
-    hasPermission(user.id, "manage_orders") ||
-    hasPermission(user.id, "manage_users");
+  const canAccessAdmin = hasPermission(user.id, "manage_users");
   const unread = db
     .prepare(
       "SELECT COUNT(*) AS count FROM notifications WHERE user_id = ? AND read_at IS NULL",
@@ -32,7 +30,7 @@ export default async function AppLayout({
             <small>FIELD OPERATIONS</small>
           </div>
         </Link>
-        <Sidebar showAdmin={canManage} />
+        <Sidebar showAdmin={canAccessAdmin} />
         <div className="sidebar-user">
           <Avatar username={user.username} image={user.profile_image} />
           <div className="sidebar-user-copy">
