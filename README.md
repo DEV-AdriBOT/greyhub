@@ -46,4 +46,4 @@ For a production-style local run, use `npm run build` followed by `npm start`.
 
 ## Vercel
 
-GreyHub uses a connected private Vercel Blob store for profile pictures and proof images. SQLite still runs from temporary storage on Vercel, so orders, users, payments and chat messages are suitable for demonstration only until a managed relational database is connected.
+GreyHub uses a connected private Vercel Blob store for profile pictures, proof images, banners and account credentials. Usernames, password hashes and assigned roles are restored after deployments. Operational data such as orders, payments and chat messages still uses temporary SQLite storage on Vercel until a managed relational database is connected.

@@ -2,6 +2,11 @@ import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  persistAccount,
+  restoreStoredAccounts,
+  storedAccountForLogin,
+} from "@/lib/accounts";
 import { db, hasPermission, type Permission } from "@/lib/db";
 
 const COOKIE_NAME = "greyhub_session";
@@ -86,12 +91,15 @@ export async function destroySession() {
 }
 
 export async function authenticate(username: string, password: string) {
+  await restoreStoredAccounts();
+  const stored = await storedAccountForLogin(username);
   const user = db
     .prepare(
       "SELECT id, password_hash FROM users WHERE lower(username) = lower(?)",
     )
     .get(username) as { id: number; password_hash: string } | undefined;
   if (!user || !bcrypt.compareSync(password, user.password_hash)) return null;
+  if (process.env.VERCEL && !stored) await persistAccount(user.id);
   return user.id;
 }
 
@@ -100,6 +108,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   if (!token) return null;
   const userId = readSession(token);
   if (!userId) return null;
+  await restoreStoredAccounts();
 
   const user = db
     .prepare(
@@ -125,6 +134,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     ).run(user.id);
     user.status = "active";
     user.suspended_until = null;
+    await persistAccount(user.id);
   }
 
   const roleRows = db

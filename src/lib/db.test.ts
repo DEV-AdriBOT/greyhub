@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { beforeAll, describe, expect, it } from "vitest";
 
 let database: Awaited<typeof import("./db")>["db"];
@@ -67,6 +68,33 @@ describe("GreyHub database", () => {
     expect(created.username).toBe("admin");
     expect(created.body).toBe("Radio check");
     expect(recentChatMessages()).toEqual([created]);
+  });
+
+  it("restores a persistent account with its password and role", async () => {
+    const { restoreStoredAccount } = await import("./accounts");
+    const { hasPermission } = await import("./db");
+    const passwordHash = bcrypt.hashSync("permanent-password", 10);
+    restoreStoredAccount({
+      id: 77,
+      username: "stored-worker",
+      password_hash: passwordHash,
+      status: "active",
+      suspended_until: null,
+      joined_at: "2026-09-10T10:00:00.000Z",
+      roles: [{ name: "Foreman", permissions: ["manage_orders"] }],
+      updated_at: "2026-09-10T10:00:00.000Z",
+    });
+
+    expect(
+      database
+        .prepare("SELECT username, password_hash FROM users WHERE id = 77")
+        .get(),
+    ).toEqual({
+      username: "stored-worker",
+      password_hash: passwordHash,
+    });
+    expect(bcrypt.compareSync("permanent-password", passwordHash)).toBe(true);
+    expect(hasPermission(77, "manage_orders")).toBe(true);
   });
 
   it("creates and manages dashboard banners", async () => {

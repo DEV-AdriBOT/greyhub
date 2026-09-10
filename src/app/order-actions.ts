@@ -11,6 +11,7 @@ import {
   orderCode,
 } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { persistAccount } from "@/lib/accounts";
 import { crewLimit, orderStatusAfterAbandon, shouldSuspend } from "@/lib/rules";
 import { saveUpload } from "@/lib/uploads";
 
@@ -288,6 +289,7 @@ export async function abandonOrder(orderId: number) {
     );
     syncDings(user.id);
   })();
+  await persistAccount(user.id);
   addNotification(
     user.id,
     "ding_added",

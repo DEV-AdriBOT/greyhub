@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { persistAccount, storedAccountForLogin } from "@/lib/accounts";
 import { requireUser } from "@/lib/auth";
 import { addActivity, addNotification, db, type Permission } from "@/lib/db";
 import { shouldSuspend } from "@/lib/rules";
@@ -57,6 +58,8 @@ export async function createUser(formData: FormData) {
       .get(username)
   )
     redirect("/admin?error=That+username+already+exists");
+  if (await storedAccountForLogin(username))
+    redirect("/admin?error=That+username+already+exists");
   const userId = db.transaction(() => {
     const id = Number(
       db
@@ -75,6 +78,12 @@ export async function createUser(formData: FormData) {
       ).run(id, roleId);
     return id;
   })();
+  try {
+    await persistAccount(userId);
+  } catch (error) {
+    db.prepare("DELETE FROM users WHERE id = ?").run(userId);
+    throw error;
+  }
   addActivity(admin.id, "user_created", { userId, details: username });
   refreshAdmin(userId);
   redirect(`/admin/users/${userId}?notice=User+created`);
@@ -106,6 +115,7 @@ export async function updateUser(userId: number, formData: FormData) {
     );
     for (const roleId of roleIds) addRole.run(userId, roleId);
   })();
+  await persistAccount(userId);
   addActivity(admin.id, "user_updated", { userId, details: username });
   addNotification(
     userId,
@@ -124,10 +134,24 @@ export async function setUserPassword(userId: number, formData: FormData) {
     redirect(
       `/admin/users/${userId}?error=Password+must+be+at+least+8+characters`,
     );
+  const current = db
+    .prepare("SELECT password_hash FROM users WHERE id = ?")
+    .get(userId) as { password_hash: string } | undefined;
+  if (!current) redirect("/admin?error=User+not+found");
+  const passwordHash = bcrypt.hashSync(password, 10);
   db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
-    bcrypt.hashSync(password, 10),
+    passwordHash,
     userId,
   );
+  try {
+    await persistAccount(userId);
+  } catch (error) {
+    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+      current.password_hash,
+      userId,
+    );
+    throw error;
+  }
   db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
   addActivity(admin.id, "password_reset", { userId });
   refreshAdmin(userId);
@@ -143,6 +167,7 @@ export async function addDing(userId: number, formData: FormData) {
     "INSERT INTO dings (user_id, reason, added_by) VALUES (?, ?, ?)",
   ).run(userId, reason || "Manual manager ding", admin.id);
   const count = recalculateDings(userId);
+  await persistAccount(userId);
   addNotification(
     userId,
     "ding_added",
@@ -162,6 +187,7 @@ export async function removeDing(userId: number, dingId: number) {
     "UPDATE dings SET removed_at = CURRENT_TIMESTAMP, removed_by = ? WHERE id = ? AND user_id = ? AND removed_at IS NULL",
   ).run(admin.id, dingId, userId);
   recalculateDings(userId);
+  await persistAccount(userId);
   addActivity(admin.id, "ding_removed", { userId });
   refreshAdmin(userId);
   redirect(`/admin/users/${userId}?notice=Ding+removed`);
@@ -190,11 +216,15 @@ export async function updateRole(roleId: number, formData: FormData) {
     .trim()
     .slice(0, 60);
   if (!name) redirect("/admin/roles?error=Role+name+is+required");
+  const assignedUsers = db
+    .prepare("SELECT user_id FROM user_roles WHERE role_id = ?")
+    .all(roleId) as { user_id: number }[];
   db.prepare("UPDATE roles SET name = ?, permissions = ? WHERE id = ?").run(
     name,
     JSON.stringify(getPermissions(formData)),
     roleId,
   );
+  for (const user of assignedUsers) await persistAccount(user.user_id);
   addActivity(admin.id, "role_updated", { details: name });
   refreshAdmin();
   redirect("/admin/roles?notice=Role+updated");
