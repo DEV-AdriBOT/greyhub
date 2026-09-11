@@ -45,6 +45,28 @@ button,
 a {
   -webkit-tap-highlight-color: transparent;
 }
+.sound-toggle {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+  padding: 7px 10px;
+  color: var(--muted);
+  background: var(--ground-deep);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 28%);
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.sound-toggle:hover,
+.sound-toggle:focus-visible {
+  color: var(--ink);
+  border-color: var(--moss);
+  outline: none;
+}
 
 .app-shell {
   min-height: 100vh;
