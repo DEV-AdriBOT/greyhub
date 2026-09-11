@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logoutAction } from "@/app/auth-actions";
+import { AppShell } from "@/components/app-shell";
 import { Avatar } from "@/components/avatar";
 import { Sidebar } from "@/components/sidebar";
 import { db, hasPermission } from "@/lib/db";
@@ -20,41 +21,32 @@ export default async function AppLayout({
     )
     .get(user.id) as { count: number };
 
-  return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <Link href="/dashboard" className="brand-lockup">
-          <span className="brand-mark">▲</span>
-          <div>
-            <strong>GreyHub</strong>
-            <small>FIELD OPERATIONS</small>
-          </div>
-        </Link>
-        <Sidebar showAdmin={canAccessAdmin} />
-        <div className="sidebar-user">
-          <Avatar username={user.username} image={user.profile_image} />
-          <div className="sidebar-user-copy">
-            <strong>{user.username}</strong>
-            <small>{user.roles.join(" · ") || "Crew"}</small>
-          </div>
-          <form action={logoutAction}>
-            <button className="text-button">Sign out</button>
-          </form>
+  const navigation = (
+    <>
+      <Link href="/dashboard" className="brand-lockup">
+        <span className="brand-mark">▲</span>
+        <div>
+          <strong>GreyHub</strong>
+          <small>FIELD OPERATIONS</small>
         </div>
-      </aside>
-      <div className="app-main">
-        <header className="topbar">
-          <div className="mobile-brand">
-            <span className="brand-mark">▲</span>
-            <strong>GreyHub</strong>
-          </div>
-          <span className="station-label">GREY COMPANY · OPERATIONS BOARD</span>
-          <Link href="/notifications" className="notification-link">
-            Notices {unread.count > 0 && <b>{unread.count}</b>}
-          </Link>
-        </header>
-        <main className="content">{children}</main>
+      </Link>
+      <Sidebar showAdmin={canAccessAdmin} />
+      <div className="sidebar-user">
+        <Avatar username={user.username} image={user.profile_image} />
+        <div className="sidebar-user-copy">
+          <strong>{user.username}</strong>
+          <small>{user.roles.join(" · ") || "Crew"}</small>
+        </div>
+        <form action={logoutAction}>
+          <button className="text-button">Sign out</button>
+        </form>
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <AppShell navigation={navigation} unreadNotices={unread.count}>
+      {children}
+    </AppShell>
   );
 }
