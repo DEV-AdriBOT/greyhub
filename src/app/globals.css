@@ -2195,35 +2195,104 @@ select:focus {
 }
 .mart-sign {
   position: absolute;
-  top: 48px;
+  top: 40px;
   left: 50%;
   z-index: 4;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 9px 16px 8px;
-  color: #fff4d4;
-  background: #f4e4bc;
-  border: 3px solid #4e4036;
+  gap: 12px;
+  width: min(430px, calc(100% - 370px));
+  min-width: 315px;
+  min-height: 76px;
+  padding: 8px 14px;
+  color: #fff;
+  background: #050505;
+  border: 3px solid #e6d7b2;
   box-shadow: 4px 5px 0 rgb(79 55 39 / 27%);
-  font-size: 0.76rem;
   transform: translateX(-50%) rotate(-0.5deg);
 }
-.mart-sign span,
-.mart-sign strong {
-  padding: 5px 8px;
-  letter-spacing: 0.1em;
+.orbit-mark {
+  position: relative;
+  width: 60px;
+  height: 48px;
+  flex: 0 0 auto;
+  perspective: 100px;
+  transform-style: preserve-3d;
+  animation: mart-orbit-parallel 7s linear infinite;
 }
-.mart-sign span {
-  background: var(--mart-green);
+.orbit-mark i {
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: inset -7px -3px 0 #d9d9d9;
 }
-.mart-sign strong {
-  background: var(--mart-red);
-  font-size: 1rem;
+.orbit-mark b {
+  position: absolute;
+  top: 15px;
+  left: 2px;
+  width: 57px;
+  height: 18px;
+  border: 5px solid #fff;
+  border-right-width: 9px;
+  border-left-width: 9px;
+  border-radius: 50%;
+  transform: rotate(-14deg);
 }
-.mart-sign small {
-  color: var(--mart-ink);
+.orbit-sign-copy {
+  display: grid;
+  min-width: 0;
+}
+.orbit-sign-copy strong {
+  font-size: 0.74rem;
   font-weight: 900;
+  letter-spacing: 0.22em;
+}
+.orbit-sign-copy small {
+  margin-top: 2px;
+  color: #b8b8b8;
+  font-size: 0.46rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.orbit-sign-copy em {
+  margin-top: 5px;
+  color: #f0d898;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.62rem;
+  line-height: 1.15;
+}
+.mart-scan-response {
+  position: absolute;
+  top: 119px;
+  left: 50%;
+  z-index: 8;
+  width: min(460px, calc(100% - 390px));
+  min-width: 330px;
+  padding: 6px 10px;
+  overflow: hidden;
+  color: #d9c79b;
+  background: rgb(12 14 12 / 88%);
+  border: 1px solid #6e715c;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.54rem;
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.mart-scan-response span {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 5px;
+  background: #9dcc7b;
+  border-radius: 50%;
+  box-shadow: 0 0 5px #9dcc7b;
 }
 .mart-discounts,
 .mart-total {
@@ -2626,6 +2695,16 @@ select:focus {
   line-height: 1;
   text-align: center;
 }
+.delivery-box > img {
+  position: absolute;
+  top: 22px;
+  left: 7px;
+  width: 27px;
+  height: 27px;
+  object-fit: cover;
+  border: 2px solid #4c3125;
+  image-rendering: auto;
+}
 .box-lid {
   position: absolute;
   top: -8px;
@@ -2935,6 +3014,24 @@ select:focus {
   width: 32px;
   height: 32px;
 }
+.mart-cursor-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  width: 12px;
+  height: 12px;
+  opacity: 0;
+  background: #050505;
+  border: 2px solid #ead6a7;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 45%);
+  pointer-events: none;
+  transition:
+    transform 560ms cubic-bezier(0.16, 0.7, 0.24, 1),
+    opacity 180ms ease;
+  will-change: transform;
+}
 .mart-help {
   display: flex;
   justify-content: space-between;
@@ -2978,6 +3075,11 @@ select:focus {
   from { opacity: 0; transform: translateY(-16px) rotate(-8deg); }
   to { opacity: 1; transform: translateY(0) rotate(0); }
 }
+@keyframes mart-orbit-parallel {
+  0% { transform: rotateY(0deg) rotateZ(0deg); }
+  50% { transform: rotateY(180deg) rotateZ(4deg); }
+  100% { transform: rotateY(360deg) rotateZ(0deg); }
+}
 
 @media (max-width: 1100px) {
   .mart-machine-wrap {
@@ -3014,24 +3116,31 @@ select:focus {
   }
   .mart-sign {
     top: 43px;
+    width: min(360px, calc(100% - 300px));
+    min-width: 290px;
   }
   .mart-discounts {
-    top: 105px;
+    top: 126px;
   }
   .mart-total {
-    top: 102px;
+    top: 123px;
+  }
+  .mart-scan-response {
+    top: 195px;
+    width: min(420px, calc(100% - 245px));
+    min-width: 300px;
   }
   .mart-window {
-    top: 190px;
+    top: 220px;
     height: 550px;
   }
   .mart-machine-wrap {
-    top: 230px;
+    top: 260px;
     left: 40%;
     transform: translateX(-50%);
   }
   .mart-delivery {
-    top: 245px;
+    top: 275px;
     right: 22px;
     width: 190px;
   }
@@ -3067,15 +3176,17 @@ select:focus {
     gap: 10px;
   }
   .mart-scene {
-    min-height: 1650px;
+    min-height: 1690px;
     border-width: 3px;
   }
   .mart-sign {
     top: 42px;
+    width: calc(100% - 28px);
+    min-width: 0;
   }
   .mart-discounts,
   .mart-total {
-    top: 108px;
+    top: 141px;
   }
   .mart-discounts {
     left: 14px;
@@ -3086,18 +3197,18 @@ select:focus {
     min-width: 155px;
   }
   .mart-window {
-    top: 225px;
+    top: 278px;
     right: 10px;
     left: 10px;
     height: 1010px;
   }
   .mart-machine-wrap {
-    top: 255px;
+    top: 310px;
     left: 50%;
     transform: translateX(-50%) scale(0.92);
   }
   .mart-delivery {
-    top: 710px;
+    top: 765px;
     right: 18px;
     left: 18px;
     width: auto;
@@ -3130,7 +3241,7 @@ select:focus {
     bottom: 180px;
   }
   .mart-flying-item {
-    top: 450px;
+    top: 505px;
     left: calc(50% - 27px);
   }
   .mart-help {
@@ -3138,6 +3249,14 @@ select:focus {
   }
   .mart-help p:last-child {
     text-align: left;
+  }
+  .mart-scan-response {
+    top: 246px;
+    width: calc(100% - 28px);
+    min-width: 0;
+  }
+  .orbit-sign-copy em {
+    font-size: 0.56rem;
   }
   @keyframes mart-item-delivery {
     0% { opacity: 0; transform: translate(0, -20px) scale(0.65); }
@@ -3156,5 +3275,8 @@ select:focus {
   .box-lid {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+  .orbit-mark {
+    animation-duration: 0.01ms !important;
   }
 }

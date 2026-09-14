@@ -1,7 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 
 type Worker = {
   id: number;
@@ -60,6 +67,12 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [memberPass, setMemberPass] = useState(false);
   const [adIndex, setAdIndex] = useState(0);
+  const [hoverResponse, setHoverResponse] = useState(
+    "Scanner idle — hover over the mart.",
+  );
+  const dotRef = useRef<HTMLSpanElement>(null);
+  const lastDotMove = useRef(0);
+  const lastResponse = useRef("");
 
   useEffect(() => {
     const interval = window.setInterval(
@@ -112,6 +125,32 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
     assignWorker(event.dataTransfer.getData("text/plain"), foodId);
   }
 
+  function inspectMart(event: ReactPointerEvent<HTMLElement>) {
+    if (event.pointerType === "touch") return;
+
+    const now = performance.now();
+    if (dotRef.current && now - lastDotMove.current > 140) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      dotRef.current.style.opacity = "1";
+      dotRef.current.style.transform = `translate(${event.clientX - rect.left - 6}px, ${event.clientY - rect.top - 6}px)`;
+      lastDotMove.current = now;
+    }
+
+    const response = (event.target as HTMLElement)
+      .closest<HTMLElement>("[data-mart-response]")
+      ?.dataset.martResponse;
+    if (response && response !== lastResponse.current) {
+      lastResponse.current = response;
+      setHoverResponse(response);
+    }
+  }
+
+  function stopInspecting() {
+    if (dotRef.current) dotRef.current.style.opacity = "0";
+    lastResponse.current = "";
+    setHoverResponse("Scanner idle — hover over the mart.");
+  }
+
   return (
     <div className="mart-page">
       <header className="mart-intro">
@@ -125,22 +164,45 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
       <section
         className={`mart-scene${packing ? " is-packing" : ""}`}
         aria-label="Interactive Grey Mart vending counter"
+        onPointerMove={inspectMart}
+        onPointerLeave={stopInspecting}
       >
         <div className="mart-awning" aria-hidden="true" />
 
-        <div className="mart-sign">
-          <span>GREY</span>
-          <strong>MART</strong>
-          <small>24 · 7</small>
+        <div
+          className="mart-sign"
+          data-mart-response="Jupiters Steel orbit checked. Delivery systems are nominal."
+        >
+          <span className="orbit-mark" aria-hidden="true">
+            <i />
+            <b />
+          </span>
+          <span className="orbit-sign-copy">
+            <strong>JUPITERS STEEL</strong>
+            <small>Official delivery crates</small>
+            <em>“Our vending machine is top of the uhh—stratosphere.”</em>
+          </span>
         </div>
 
-        <div className="mart-discounts" aria-label="Discount tags">
+        <p className="mart-scan-response" aria-live="polite">
+          <span /> {hoverResponse}
+        </p>
+
+        <div
+          className="mart-discounts"
+          aria-label="Discount tags"
+          data-mart-response="Discount scan: two approved snacks can leave together for $5."
+        >
           <span>SHIFT DEAL</span>
           <strong>2 snacks<br />for $5</strong>
           <small>Today only</small>
         </div>
 
-        <div className="mart-total" aria-live="polite">
+        <div
+          className="mart-total"
+          aria-live="polite"
+          data-mart-response="Register check: totals update after each crate reaches the counter."
+        >
           <span>REGISTER TOTAL</span>
           <strong>${total.toFixed(2)}</strong>
           {discount > 0 && <small>Member saving −${discount.toFixed(2)}</small>}
@@ -154,7 +216,10 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
           </div>
         </div>
 
-        <div className="mart-machine-wrap">
+        <div
+          className="mart-machine-wrap"
+          data-mart-response="Our vending machine is top of the uhh—stratosphere."
+        >
           <div
             className={`mart-machine${machineOpen ? " is-open" : ""}`}
           >
@@ -185,6 +250,7 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
                     onDrop={(event) => dropWorker(event, food.id)}
                     disabled={Boolean(packing)}
                     aria-label={`${food.name}, $${food.price.toFixed(2)}. Drop a worker here.`}
+                    data-mart-response={`${food.name}: shelf ${food.code}, priced at $${food.price.toFixed(2)}.`}
                   >
                     <Image
                       src={foodImage(food.id)}
@@ -220,7 +286,11 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
           )}
         </div>
 
-        <aside className="mart-delivery" aria-label="Delivery assignment">
+        <aside
+          className="mart-delivery"
+          aria-label="Delivery assignment"
+          data-mart-response="Jupiters Steel crates are standing by for a crew assignment."
+        >
           <div className="delivery-copy">
             <span>DELIVERY SHELF</span>
             <strong>
@@ -244,6 +314,7 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
                 }}
                 onClick={() => assignWorker(worker.username, selectedFood)}
                 disabled={!selectedFood || Boolean(packing)}
+                data-mart-response={`Assign the selected snack to ${worker.username}.`}
               >
                 <span>{worker.username.slice(0, 1).toUpperCase()}</span>
                 {worker.username}
@@ -257,13 +328,23 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
               <div className="delivery-box" key={box}>
                 <i className="box-lid left" />
                 <i className="box-lid right" />
+                <Image
+                  src="/mart/jupiters-steel.png"
+                  alt="Jupiters Steel"
+                  width={650}
+                  height={650}
+                  unoptimized
+                />
                 <span>GH<br />{box}</span>
               </div>
             ))}
           </div>
         </aside>
 
-        <div className="mart-counter">
+        <div
+          className="mart-counter"
+          data-mart-response="Checkout counter checked. Vended items land here after packing."
+        >
           <div className="counter-top">
             <span>CHECKOUT</span>
             <div className="counter-items" aria-label="Items at checkout">
@@ -293,7 +374,11 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
           </div>
         </div>
 
-        <aside className="mart-misc" aria-label="Membership and business cards">
+        <aside
+          className="mart-misc"
+          aria-label="Membership and business cards"
+          data-mart-response="Crew Pass detected: activate it for a 10% basket discount."
+        >
           <span className="misc-label">TAKE ONE</span>
           <button
             type="button"
@@ -311,7 +396,11 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
           </div>
         </aside>
 
-        <aside className={`mart-ad ${currentAd.color}`} aria-label="Electronic advertisement">
+        <aside
+          className={`mart-ad ${currentAd.color}`}
+          aria-label="Electronic advertisement"
+          data-mart-response="Electronic notice board online. The screen rotates automatically."
+        >
           <div className="ad-scanline" />
           <span>{currentAd.label}</span>
           <strong>{currentAd.title}</strong>
@@ -347,6 +436,7 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
             />
           </div>
         )}
+        <span className="mart-cursor-dot" ref={dotRef} aria-hidden="true" />
       </section>
 
       <footer className="mart-help">
