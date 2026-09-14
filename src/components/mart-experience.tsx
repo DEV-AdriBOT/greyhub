@@ -174,8 +174,13 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
           data-mart-response="Jupiters Steel orbit checked. Delivery systems are nominal."
         >
           <span className="orbit-mark" aria-hidden="true">
-            <i />
-            <b />
+            <Image
+              src="/mart/jupiters-steel.png"
+              alt=""
+              width={650}
+              height={650}
+              unoptimized
+            />
           </span>
           <span className="orbit-sign-copy">
             <strong>JUPITERS STEEL</strong>
@@ -328,14 +333,11 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
               <div className="delivery-box" key={box}>
                 <i className="box-lid left" />
                 <i className="box-lid right" />
-                <Image
-                  src="/mart/jupiters-steel.png"
-                  alt="Jupiters Steel"
-                  width={650}
-                  height={650}
-                  unoptimized
-                />
-                <span>GH<br />{box}</span>
+                <span className="crate-stamp" aria-hidden="true">
+                  <i />
+                  <b />
+                </span>
+                <span className="crate-code">JS<br />{box}</span>
               </div>
             ))}
           </div>

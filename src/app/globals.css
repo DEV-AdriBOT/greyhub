@@ -2219,28 +2219,15 @@ select:focus {
   perspective: 100px;
   transform-style: preserve-3d;
   animation: mart-orbit-parallel 7s linear infinite;
+  overflow: hidden;
 }
-.orbit-mark i {
+.orbit-mark img {
   position: absolute;
-  top: 8px;
-  left: 16px;
-  width: 32px;
-  height: 32px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: inset -7px -3px 0 #d9d9d9;
-}
-.orbit-mark b {
-  position: absolute;
-  top: 15px;
-  left: 2px;
-  width: 57px;
-  height: 18px;
-  border: 5px solid #fff;
-  border-right-width: 9px;
-  border-left-width: 9px;
-  border-radius: 50%;
-  transform: rotate(-14deg);
+  top: -27px;
+  left: -31px;
+  width: 125px;
+  height: 125px;
+  max-width: none;
 }
 .orbit-sign-copy {
   display: grid;
@@ -2685,25 +2672,43 @@ select:focus {
     inset 0 8px 0 #bd8050,
     4px 6px 0 rgb(51 35 27 / 23%);
 }
-.delivery-box > span {
+.delivery-box > .crate-code {
   position: absolute;
   top: 25px;
-  right: 16px;
+  right: 10px;
   color: #6d4129;
   font-size: 0.7rem;
   font-weight: 900;
   line-height: 1;
   text-align: center;
 }
-.delivery-box > img {
+.crate-stamp {
   position: absolute;
-  top: 22px;
-  left: 7px;
-  width: 27px;
-  height: 27px;
-  object-fit: cover;
-  border: 2px solid #4c3125;
-  image-rendering: auto;
+  top: 27px;
+  left: 8px;
+  width: 31px;
+  height: 22px;
+  opacity: 0.72;
+  transform: rotate(-6deg);
+}
+.crate-stamp i {
+  position: absolute;
+  top: 3px;
+  left: 8px;
+  width: 15px;
+  height: 15px;
+  background: #70462e;
+  border-radius: 50%;
+}
+.crate-stamp b {
+  position: absolute;
+  top: 7px;
+  left: 1px;
+  width: 29px;
+  height: 8px;
+  border: 2px solid #70462e;
+  border-radius: 50%;
+  transform: rotate(-13deg);
 }
 .box-lid {
   position: absolute;
