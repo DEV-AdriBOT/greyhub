@@ -107,7 +107,21 @@ export function restoreStoredAccount(account: StoredAccount) {
 
 export async function restoreStoredAccounts() {
   if (!process.env.VERCEL) return;
-  for (const account of await blobAccounts()) restoreStoredAccount(account);
+  const accounts = await blobAccounts();
+  let changed = false;
+  const normalizedAccounts = accounts.map((account) => {
+    const staffRoles = account.roles.filter(
+      (role) => role.name.toLowerCase() !== "visitor",
+    );
+    const roles = staffRoles.length
+      ? staffRoles
+      : [{ name: "Visitor", permissions: [] }];
+    if (JSON.stringify(roles) === JSON.stringify(account.roles)) return account;
+    changed = true;
+    return { ...account, roles, updated_at: new Date().toISOString() };
+  });
+  if (changed) await saveBlobAccounts(normalizedAccounts);
+  for (const account of normalizedAccounts) restoreStoredAccount(account);
 }
 
 export async function persistAccount(userId: number) {

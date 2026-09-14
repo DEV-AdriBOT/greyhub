@@ -7,14 +7,28 @@ type MartWorker = {
   username: string;
 };
 
-export default async function MartPage() {
+export default async function MartPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   await requireUser();
+  const query = await searchParams;
 
   const workers = db
     .prepare(
-      "SELECT id, username FROM users WHERE status = 'active' ORDER BY username LIMIT 12",
+      `SELECT DISTINCT users.id, users.username FROM users
+       JOIN user_roles ON user_roles.user_id = users.id
+       JOIN roles ON roles.id = user_roles.role_id
+       WHERE users.status = 'active' AND lower(roles.name) != 'visitor'
+       ORDER BY users.username LIMIT 12`,
     )
     .all() as MartWorker[];
 
-  return <MartExperience workers={workers} />;
+  return (
+    <>
+      {query.error && <div className="flash flash-error">{query.error}</div>}
+      <MartExperience workers={workers} />
+    </>
+  );
 }

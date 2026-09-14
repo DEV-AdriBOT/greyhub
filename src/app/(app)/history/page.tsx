@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { StatusPill } from "@/components/status-pill";
 import { requireUser } from "@/lib/auth";
-import { db, hasPermission, orderCode } from "@/lib/db";
+import { db, hasPermission, isVisitorAccount, orderCode } from "@/lib/db";
 import { money, shortDate, titleCase } from "@/lib/format";
 
 type HistoryOrder = {
@@ -34,13 +34,14 @@ export default async function HistoryPage({
   const manager =
     hasPermission(user.id, "manage_orders") ||
     hasPermission(user.id, "review_orders");
+  const canViewCompany = manager || isVisitorAccount(user);
   const view = ["current", "completed", "abandoned"].includes(query.view || "")
     ? query.view!
     : "current";
   const clauses: string[] = [];
   const values: (string | number)[] = [];
 
-  if (manager) {
+  if (canViewCompany) {
     if (view === "current")
       clauses.push(
         "orders.status IN ('available', 'claimed', 'in_progress', 'pending_review')",
@@ -105,7 +106,7 @@ export default async function HistoryPage({
   `,
     )
     .all(...values) as HistoryOrder[];
-  const employees = manager
+  const employees = canViewCompany
     ? (db.prepare("SELECT id, username FROM users ORDER BY username").all() as {
         id: number;
         username: string;
@@ -118,7 +119,7 @@ export default async function HistoryPage({
         <p className="eyebrow">ORDER LEDGER</p>
         <h1>History</h1>
         <p>
-          {manager
+          {canViewCompany
             ? "Review every order and filter the company ledger."
             : "Your current, completed and abandoned work."}
         </p>
@@ -166,7 +167,7 @@ export default async function HistoryPage({
             ))}
           </select>
         </label>
-        {manager && (
+        {canViewCompany && (
           <label>
             Worker
             <select name="worker" defaultValue={query.worker || ""}>

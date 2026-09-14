@@ -102,7 +102,6 @@ export default async function EmployeePage({
           <span>Dings</span>
           <strong className={employee.dings_count ? "danger-text" : ""}>
             {employee.dings_count}
-            <small>/3</small>
           </strong>
         </div>
       </section>

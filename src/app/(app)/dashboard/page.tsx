@@ -2,7 +2,7 @@ import Link from "next/link";
 import { StatusPill } from "@/components/status-pill";
 import { SiteAd } from "@/components/site-ad";
 import { listAds } from "@/lib/ads";
-import { db, hasPermission, orderCode } from "@/lib/db";
+import { db, hasPermission, isVisitorAccount, orderCode } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { money, shortDate, timeAgo, titleCase } from "@/lib/format";
 
@@ -22,6 +22,7 @@ export default async function DashboardPage() {
   const manager =
     hasPermission(user.id, "manage_orders") ||
     hasPermission(user.id, "review_orders");
+  const canViewCompany = manager || isVisitorAccount(user);
   const ads = await listAds(true);
 
   const available = db
@@ -39,33 +40,33 @@ export default async function DashboardPage() {
       `
     SELECT orders.*, COUNT(all_workers.user_id) AS worker_count
     FROM orders
-    JOIN order_workers mine ON mine.order_id = orders.id AND mine.user_id = ? AND mine.abandoned_at IS NULL
+    ${canViewCompany ? "" : "JOIN order_workers mine ON mine.order_id = orders.id AND mine.user_id = ? AND mine.abandoned_at IS NULL"}
     LEFT JOIN order_workers all_workers ON all_workers.order_id = orders.id AND all_workers.abandoned_at IS NULL
     WHERE orders.status IN ('claimed', 'in_progress')
     GROUP BY orders.id ORDER BY orders.created_at DESC LIMIT 5
   `,
     )
-    .all(user.id) as OrderRow[];
+    .all(...(canViewCompany ? [] : [user.id])) as OrderRow[];
   const pending = db
     .prepare(
       `
     SELECT orders.*, COUNT(order_workers.user_id) AS worker_count
     FROM orders LEFT JOIN order_workers ON order_workers.order_id = orders.id AND order_workers.abandoned_at IS NULL
-    WHERE orders.status = 'pending_review' ${manager ? "" : "AND EXISTS (SELECT 1 FROM order_workers mine WHERE mine.order_id = orders.id AND mine.user_id = ? AND mine.abandoned_at IS NULL)"}
+    WHERE orders.status = 'pending_review' ${canViewCompany ? "" : "AND EXISTS (SELECT 1 FROM order_workers mine WHERE mine.order_id = orders.id AND mine.user_id = ? AND mine.abandoned_at IS NULL)"}
     GROUP BY orders.id ORDER BY orders.created_at DESC LIMIT 5
   `,
     )
-    .all(...(manager ? [] : [user.id])) as OrderRow[];
+    .all(...(canViewCompany ? [] : [user.id])) as OrderRow[];
   const completed = db
     .prepare(
       `
     SELECT orders.*, COUNT(order_workers.user_id) AS worker_count
     FROM orders LEFT JOIN order_workers ON order_workers.order_id = orders.id AND order_workers.abandoned_at IS NULL
-    WHERE orders.status = 'completed' ${manager ? "" : "AND EXISTS (SELECT 1 FROM order_workers mine WHERE mine.order_id = orders.id AND mine.user_id = ? AND mine.abandoned_at IS NULL)"}
+    WHERE orders.status = 'completed' ${canViewCompany ? "" : "AND EXISTS (SELECT 1 FROM order_workers mine WHERE mine.order_id = orders.id AND mine.user_id = ? AND mine.abandoned_at IS NULL)"}
     GROUP BY orders.id ORDER BY orders.completion_date DESC LIMIT 4
   `,
     )
-    .all(...(manager ? [] : [user.id])) as OrderRow[];
+    .all(...(canViewCompany ? [] : [user.id])) as OrderRow[];
 
   const employeeCount = (
     db
@@ -135,14 +136,14 @@ export default async function DashboardPage() {
           <strong>{available.length}</strong>
         </div>
         <div>
-          <span>My active</span>
+          <span>{canViewCompany ? "Active" : "My active"}</span>
           <strong>{active.length}</strong>
         </div>
         <div>
           <span>Pending review</span>
           <strong>{pending.length}</strong>
         </div>
-        {manager ? (
+        {canViewCompany ? (
           <div>
             <span>Unpaid orders</span>
             <strong>{unpaidCount}</strong>
@@ -157,7 +158,6 @@ export default async function DashboardPage() {
           <span>Dings</span>
           <strong className={user.dings_count ? "danger-text" : ""}>
             {user.dings_count}
-            <small>/3</small>
           </strong>
         </div>
       </section>
@@ -192,7 +192,7 @@ export default async function DashboardPage() {
           <div className="section-heading">
             <div>
               <p className="eyebrow">INSPECTION</p>
-              <h2>{manager ? "Awaiting review" : "Pending review"}</h2>
+              <h2>{canViewCompany ? "Awaiting review" : "Pending review"}</h2>
             </div>
           </div>
           <OrderList orders={pending} empty="The review bench is clear." />
@@ -209,7 +209,7 @@ export default async function DashboardPage() {
           <OrderTable orders={completed} empty="No completed orders yet." />
         </section>
 
-        {manager && (
+        {canViewCompany && (
           <section className="board-section">
             <div className="section-heading">
               <div>
@@ -233,7 +233,7 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {manager && (
+        {canViewCompany && (
           <section className="board-section activity-section">
             <div className="section-heading">
               <div>

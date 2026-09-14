@@ -3,12 +3,12 @@
 import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireActionUser } from "@/lib/auth";
 import { addActivity, db } from "@/lib/db";
 import { saveUpload } from "@/lib/uploads";
 
 export async function updateProfileImage(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireActionUser();
   const file = formData.get("profile_image");
   if (!(file instanceof File) || file.size === 0)
     redirect("/profile?error=Choose+an+image");
@@ -35,7 +35,7 @@ export async function updateProfileImage(formData: FormData) {
 }
 
 export async function markNotificationsRead() {
-  const user = await requireUser();
+  const user = await requireActionUser();
   db.prepare(
     "UPDATE notifications SET read_at = CURRENT_TIMESTAMP WHERE user_id = ? AND read_at IS NULL",
   ).run(user.id);

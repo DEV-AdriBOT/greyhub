@@ -16,8 +16,6 @@ export async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user) return json({ error: "Unauthorized" }, 401);
   if (user.status === "suspended") return json({ error: "Suspended" }, 403);
-  if (isVisitorAccount(user))
-    return json({ error: "Visitors cannot use chat" }, 403);
 
   const afterValue = new URL(request.url).searchParams.get("after") || "0";
   const after = Number(afterValue);

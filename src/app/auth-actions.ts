@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { authenticate, createSession, destroySession } from "@/lib/auth";
-import { isVisitorUserId } from "@/lib/db";
 
 export type LoginState = { error: string };
 
@@ -20,7 +19,7 @@ export async function loginAction(
   if (!userId) return { error: "That username or password is not correct." };
 
   await createSession(userId);
-  redirect(isVisitorUserId(userId) ? "/visitor" : "/dashboard");
+  redirect("/dashboard");
 }
 
 export async function logoutAction() {

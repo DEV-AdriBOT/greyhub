@@ -15,8 +15,7 @@ export default async function AppLayout({
 }) {
   const user = await requireAuthenticatedUser();
   const visitorMode = isVisitorAccount(user);
-  const canAccessAdmin =
-    !visitorMode && hasPermission(user.id, "manage_users");
+  const canAccessAdmin = !visitorMode && hasPermission(user.id, "manage_users");
   const unread = db
     .prepare(
       "SELECT COUNT(*) AS count FROM notifications WHERE user_id = ? AND read_at IS NULL",
@@ -25,27 +24,14 @@ export default async function AppLayout({
 
   const navigation = (
     <>
-      <Link
-        href={visitorMode ? "/visitor" : "/dashboard"}
-        className="brand-lockup"
-      >
+      <Link href="/dashboard" className="brand-lockup">
         <span className="brand-mark">▲</span>
         <div>
           <strong>GreyHub</strong>
           <small>FIELD OPERATIONS</small>
         </div>
       </Link>
-      {visitorMode ? (
-        <nav className="sidebar-nav" aria-label="Visitor navigation">
-          <p className="nav-label">VISITOR DESK</p>
-          <Link href="/visitor" className="active">
-            <span className="nav-tick">—</span>
-            Notices
-          </Link>
-        </nav>
-      ) : (
-        <Sidebar showAdmin={canAccessAdmin} />
-      )}
+      <Sidebar showAdmin={canAccessAdmin} />
       <div className="sidebar-user">
         <Avatar username={user.username} image={user.profile_image} />
         <div className="sidebar-user-copy">

@@ -174,9 +174,15 @@ export async function requireAuthenticatedUser() {
 
 export async function requireUser(permission?: Permission) {
   const user = await requireAuthenticatedUser();
-  if (isVisitorAccount(user)) redirect("/visitor");
   if (permission && !hasPermission(user.id, permission))
     redirect("/dashboard?error=forbidden");
+  return user;
+}
+
+export async function requireActionUser(permission?: Permission) {
+  const user = await requireUser(permission);
+  if (isVisitorAccount(user))
+    redirect("/dashboard?error=Visitor+accounts+are+read-only");
   return user;
 }
 

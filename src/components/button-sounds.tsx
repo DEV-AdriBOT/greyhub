@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 
 type SoundKind = "pebble" | "rock" | "clank";
+const SOUND_VOLUME = 3;
 
 export function ButtonSounds() {
   const enabledRef = useRef(true);
@@ -53,7 +54,10 @@ export function ButtonSounds() {
       filter.type = kind === "clank" ? "bandpass" : "lowpass";
       filter.frequency.value = settings.frequency * (1 + index * 0.22);
       filter.Q.value = kind === "clank" ? 6 : 1.3;
-      gain.gain.setValueAtTime(settings.volume * (index ? 0.65 : 1), start);
+      gain.gain.setValueAtTime(
+        settings.volume * SOUND_VOLUME * (index ? 0.65 : 1),
+        start,
+      );
       gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
       source.connect(filter).connect(gain).connect(audio.destination);
       source.start(start);

@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { checkoutMart } from "@/app/mart-actions";
+import { martFoods as foods } from "@/lib/mart";
 import {
   useEffect,
   useMemo,
@@ -18,19 +20,9 @@ type Worker = {
 type CartLine = {
   id: number;
   foodId: string;
+  workerId: number;
   worker: string;
 };
-
-const foods = [
-  { id: "apple", name: "Red Apple", price: 2.25, code: "A1" },
-  { id: "bread", name: "Fresh Bread", price: 3.5, code: "A2" },
-  { id: "cooked_beef", name: "Cooked Beef", price: 6.75, code: "B1" },
-  { id: "baked_potato", name: "Baked Potato", price: 3.25, code: "B2" },
-  { id: "golden_carrot", name: "Golden Carrot", price: 8.5, code: "C1" },
-  { id: "pumpkin_pie", name: "Pumpkin Pie", price: 4.75, code: "C2" },
-  { id: "cookie", name: "Cookie", price: 1.75, code: "D1" },
-  { id: "melon_slice", name: "Melon Slice", price: 2.0, code: "D2" },
-] as const;
 
 const adverts = [
   {
@@ -62,7 +54,7 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
   const [selectedFood, setSelectedFood] = useState<string | null>(null);
   const [packing, setPacking] = useState<{
     foodId: string;
-    worker: string;
+    worker: Worker;
   } | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [memberPass, setMemberPass] = useState(false);
@@ -91,7 +83,8 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
         {
           id: Date.now(),
           foodId: packing.foodId,
-          worker: packing.worker,
+          workerId: packing.worker.id,
+          worker: packing.worker.username,
         },
       ]);
       setSelectedFood(null);
@@ -114,15 +107,20 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
   const total = subtotal - discount;
   const currentAd = adverts[adIndex];
 
-  function assignWorker(worker: string, foodId: string | null) {
-    if (!foodId || packing) return;
+  function assignWorker(worker: Worker | undefined, foodId: string | null) {
+    if (!worker || !foodId || packing) return;
     setSelectedFood(foodId);
     setPacking({ worker, foodId });
   }
 
   function dropWorker(event: DragEvent<HTMLButtonElement>, foodId: string) {
     event.preventDefault();
-    assignWorker(event.dataTransfer.getData("text/plain"), foodId);
+    assignWorker(
+      workers.find(
+        (worker) => worker.id === Number(event.dataTransfer.getData("text/plain")),
+      ),
+      foodId,
+    );
   }
 
   function inspectMart(event: ReactPointerEvent<HTMLElement>) {
@@ -300,7 +298,7 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
             <span>DELIVERY SHELF</span>
             <strong>
               {packing
-                ? `Packing for ${packing.worker}`
+                ? `Packing for ${packing.worker.username}`
                 : selectedFood
                   ? "Now choose a worker"
                   : "Select a snack first"}
@@ -314,10 +312,10 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
                 draggable={!packing}
                 key={worker.id}
                 onDragStart={(event) => {
-                  event.dataTransfer.setData("text/plain", worker.username);
+                  event.dataTransfer.setData("text/plain", String(worker.id));
                   event.dataTransfer.effectAllowed = "move";
                 }}
-                onClick={() => assignWorker(worker.username, selectedFood)}
+                onClick={() => assignWorker(worker, selectedFood)}
                 disabled={!selectedFood || Boolean(packing)}
                 data-mart-response={`Assign the selected snack to ${worker.username}.`}
               >
@@ -369,9 +367,28 @@ export function MartExperience({ workers }: { workers: Worker[] }) {
               <strong>{cart.length ? "Ready at the counter" : "Counter is clear"}</strong>
             </div>
             {cart.length > 0 && (
-              <button type="button" onClick={() => setCart([])}>
-                Clear order
-              </button>
+              <div className="counter-actions">
+                <button type="button" onClick={() => setCart([])}>
+                  Clear
+                </button>
+                <form action={checkoutMart}>
+                  <input
+                    type="hidden"
+                    name="cart"
+                    value={JSON.stringify(
+                      cart.map(({ foodId, workerId }) => ({ foodId, workerId })),
+                    )}
+                  />
+                  <input
+                    type="hidden"
+                    name="member_pass"
+                    value={memberPass ? "yes" : "no"}
+                  />
+                  <button type="submit" className="checkout-button">
+                    Checkout to Orders
+                  </button>
+                </form>
+              </div>
             )}
           </div>
         </div>

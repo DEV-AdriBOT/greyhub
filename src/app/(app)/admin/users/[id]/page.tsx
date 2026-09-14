@@ -133,7 +133,7 @@ export default async function ManageUserPage({
           <div className="section-heading">
             <div>
               <p className="eyebrow">PERFORMANCE</p>
-              <h2>Dings ({employee.dings_count}/3)</h2>
+              <h2>Dings ({employee.dings_count} active)</h2>
             </div>
           </div>
           <form action={addDing.bind(null, userId)} className="add-ding">
@@ -168,8 +168,9 @@ export default async function ManageUserPage({
             )}
           </div>
           <p className="help-text">
-            Three dings suspend an account automatically. You can restore access
-            manually using the status field.
+            Three dings suspend an account automatically, but the counter can
+            continue above three. You can restore access manually using the
+            status field.
           </p>
         </section>
       </div>

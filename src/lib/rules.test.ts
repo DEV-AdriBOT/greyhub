@@ -18,6 +18,7 @@ describe("GreyHub work rules", () => {
   it("suspends on the third ding", () => {
     expect(shouldSuspend(2)).toBe(false);
     expect(shouldSuspend(3)).toBe(true);
+    expect(shouldSuspend(8)).toBe(true);
   });
 
   it("returns abandoned work to the board when the crew is empty", () => {

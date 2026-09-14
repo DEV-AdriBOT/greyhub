@@ -12,9 +12,11 @@ function messageTime(value: string) {
 export function ChatRoom({
   initialMessages,
   currentUserId,
+  readOnly = false,
 }: {
   initialMessages: ChatMessage[];
   currentUserId: number;
+  readOnly?: boolean;
 }) {
   const [messages, setMessages] = useState(initialMessages);
   const [body, setBody] = useState("");
@@ -135,26 +137,32 @@ export function ChatRoom({
           );
         })}
       </div>
-      <form className="chat-compose" onSubmit={sendMessage}>
-        <textarea
-          value={body}
-          onChange={(event) => setBody(event.target.value)}
-          onKeyDown={handleKeyDown}
-          maxLength={500}
-          rows={2}
-          placeholder="Message the crew…"
-          aria-label="Chat message"
-          required
-        />
-        <div>
-          <span className={error ? "form-error" : "muted"}>
-            {error || `${body.length}/500 · Shift + Enter for a new line`}
-          </span>
-          <button className="button primary" disabled={sending || !body.trim()}>
-            {sending ? "Sending…" : "Send"}
-          </button>
+      {readOnly ? (
+        <div className="chat-compose chat-readonly">
+          Visitor accounts can read this channel but cannot send messages.
         </div>
-      </form>
+      ) : (
+        <form className="chat-compose" onSubmit={sendMessage}>
+          <textarea
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            onKeyDown={handleKeyDown}
+            maxLength={500}
+            rows={2}
+            placeholder="Message the crew…"
+            aria-label="Chat message"
+            required
+          />
+          <div>
+            <span className={error ? "form-error" : "muted"}>
+              {error || `${body.length}/500 · Shift + Enter for a new line`}
+            </span>
+            <button className="button primary" disabled={sending || !body.trim()}>
+              {sending ? "Sending…" : "Send"}
+            </button>
+          </div>
+        </form>
+      )}
     </section>
   );
 }

@@ -129,7 +129,7 @@ export default async function AdminPage({
                     <td>{user.completed_orders}</td>
                     <td>{money(user.money_earned)}</td>
                     <td className={user.dings_count ? "danger-text" : ""}>
-                      {user.dings_count}/3
+                      {user.dings_count}
                     </td>
                     <td>
                       <StatusPill status={user.status} />

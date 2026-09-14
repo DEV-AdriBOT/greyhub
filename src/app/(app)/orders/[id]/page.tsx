@@ -128,7 +128,18 @@ export default async function OrderDetailPage({
   const unassignedUsers = canManage
     ? (db
         .prepare(
-          `SELECT id, username FROM users WHERE status = 'active' AND id NOT IN (SELECT user_id FROM order_workers WHERE order_id = ? AND abandoned_at IS NULL) ORDER BY username`,
+          `SELECT users.id, users.username FROM users
+           WHERE users.status = 'active'
+             AND EXISTS (
+               SELECT 1 FROM user_roles
+               JOIN roles ON roles.id = user_roles.role_id
+               WHERE user_roles.user_id = users.id AND lower(roles.name) != 'visitor'
+             )
+             AND users.id NOT IN (
+               SELECT user_id FROM order_workers
+               WHERE order_id = ? AND abandoned_at IS NULL
+             )
+           ORDER BY users.username`,
         )
         .all(orderId) as { id: number; username: string }[])
     : [];

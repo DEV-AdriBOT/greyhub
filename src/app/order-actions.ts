@@ -10,7 +10,7 @@ import {
   hasPermission,
   orderCode,
 } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireActionUser, requireUser } from "@/lib/auth";
 import { persistAccount } from "@/lib/accounts";
 import { crewLimit, orderStatusAfterAbandon, shouldSuspend } from "@/lib/rules";
 import { saveUpload } from "@/lib/uploads";
@@ -120,7 +120,7 @@ export async function updateOrder(orderId: number, formData: FormData) {
 }
 
 export async function claimOrder(orderId: number) {
-  const user = await requireUser();
+  const user = await requireActionUser();
   const order = db
     .prepare("SELECT title, status, max_workers FROM orders WHERE id = ?")
     .get(orderId) as
@@ -144,7 +144,7 @@ export async function claimOrder(orderId: number) {
 }
 
 export async function startOrder(orderId: number) {
-  const user = await requireUser();
+  const user = await requireActionUser();
   const assigned = db
     .prepare(
       "SELECT 1 FROM order_workers WHERE order_id = ? AND user_id = ? AND abandoned_at IS NULL",
@@ -161,7 +161,7 @@ export async function startOrder(orderId: number) {
 }
 
 export async function requestToJoin(orderId: number) {
-  const user = await requireUser();
+  const user = await requireActionUser();
   const order = db
     .prepare("SELECT title, status, max_workers FROM orders WHERE id = ?")
     .get(orderId) as
@@ -197,7 +197,7 @@ export async function reviewJoinRequest(
   requestId: number,
   decision: "approved" | "rejected",
 ) {
-  const user = await requireUser();
+  const user = await requireActionUser();
   const request = db
     .prepare(
       `
@@ -263,7 +263,7 @@ export async function reviewJoinRequest(
 }
 
 export async function abandonOrder(orderId: number) {
-  const user = await requireUser();
+  const user = await requireActionUser();
   const order = db
     .prepare("SELECT title, status FROM orders WHERE id = ?")
     .get(orderId) as { title: string; status: string } | undefined;
@@ -306,7 +306,7 @@ export async function abandonOrder(orderId: number) {
 }
 
 export async function submitProof(orderId: number, formData: FormData) {
-  const user = await requireUser();
+  const user = await requireActionUser();
   const assigned = db
     .prepare(
       "SELECT 1 FROM order_workers WHERE order_id = ? AND user_id = ? AND abandoned_at IS NULL",

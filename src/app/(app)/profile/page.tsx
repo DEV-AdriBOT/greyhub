@@ -85,7 +85,6 @@ export default async function ProfilePage({
           <span>Dings</span>
           <strong className={user.dings_count ? "danger-text" : ""}>
             {user.dings_count}
-            <small>/3</small>
           </strong>
         </div>
       </section>

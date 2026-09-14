@@ -240,6 +240,21 @@ a {
   margin: 0 auto;
   padding: 42px 42px 70px;
 }
+.visitor-readonly {
+  margin: -18px 0 24px;
+  padding: 9px 12px;
+  color: #d7d1bf;
+  background: #30332e;
+  border-left: 3px solid var(--moss);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.visitor-mode .content :is(button, input, select, textarea, [draggable="true"]) {
+  cursor: not-allowed !important;
+  opacity: 0.58;
+}
 
 .page-heading {
   margin-bottom: 30px;
@@ -1702,6 +1717,10 @@ select:focus {
 .chat-compose > div > span {
   font-size: 0.67rem;
 }
+.chat-readonly {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
 
 .dashboard-ads {
   display: grid;
@@ -2875,6 +2894,20 @@ select:focus {
   cursor: pointer;
   font-size: 0.63rem;
   font-weight: 800;
+}
+.counter-actions {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 7px;
+}
+.counter-actions form {
+  margin: 0;
+}
+.counter-front .checkout-button {
+  color: #fff2d3;
+  background: #3d5a45;
+  border-color: #263f30;
 }
 .mart-misc,
 .mart-ad {
