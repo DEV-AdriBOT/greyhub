@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const mainLinks = [
   ["/dashboard", "Overview"],
   ["/orders", "Orders"],
+  ["/mart", "Grey Mart"],
   ["/chat", "Crew chat"],
   ["/history", "Order history"],
   ["/profile", "My profile"],
