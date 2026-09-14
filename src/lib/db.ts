@@ -107,6 +107,8 @@ db.exec(`
     amount REAL NOT NULL,
     paid_at TEXT NOT NULL,
     note TEXT NOT NULL DEFAULT '',
+    method TEXT NOT NULL DEFAULT 'manual',
+    external_reference TEXT,
     recorded_by INTEGER NOT NULL REFERENCES users(id),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
@@ -185,6 +187,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_chat_messages_created ON chat_messages(created_at);
   CREATE INDEX IF NOT EXISTS idx_ads_active_created ON ads(is_active, created_at);
 `);
+
+const paymentColumns = db.prepare("PRAGMA table_info(payments)").all() as {
+  name: string;
+}[];
+if (!paymentColumns.some((column) => column.name === "method"))
+  db.exec("ALTER TABLE payments ADD COLUMN method TEXT NOT NULL DEFAULT 'manual'");
+if (!paymentColumns.some((column) => column.name === "external_reference"))
+  db.exec("ALTER TABLE payments ADD COLUMN external_reference TEXT");
 
 function ensureAdminAccount() {
   const setup = db.transaction(() => {

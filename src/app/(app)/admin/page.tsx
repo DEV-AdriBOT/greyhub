@@ -56,6 +56,9 @@ export default async function AdminPage({
           <p>Users, permissions, reviews and the payment ledger.</p>
         </div>
         <div className="heading-actions">
+          <Link className="button" href="/admin/treasury">
+            Treasury API
+          </Link>
           <Link className="button" href="/admin/ads">
             Banners &amp; notices
           </Link>

@@ -13,13 +13,18 @@ import {
   submitProof,
   updateOrder,
 } from "@/app/order-actions";
-import { markUnpaid, recordPayment } from "@/app/payment-actions";
+import {
+  markUnpaid,
+  payWithTreasury,
+  recordPayment,
+} from "@/app/payment-actions";
 import { Avatar } from "@/components/avatar";
 import { ConfirmAction } from "@/components/confirm-action";
 import { StatusPill } from "@/components/status-pill";
 import { requireUser } from "@/lib/auth";
 import { db, hasPermission, orderCode } from "@/lib/db";
 import { money, shortDate, titleCase } from "@/lib/format";
+import { getTreasuryStatus } from "@/lib/treasury";
 
 type Order = {
   id: number;
@@ -99,7 +104,14 @@ export default async function OrderDetailPage({
   const payment = db
     .prepare("SELECT * FROM payments WHERE order_id = ?")
     .get(orderId) as
-    | { id: number; amount: number; paid_at: string; note: string }
+    | {
+        id: number;
+        amount: number;
+        paid_at: string;
+        note: string;
+        method: string;
+        external_reference: string | null;
+      }
     | undefined;
   const paymentSplits = payment
     ? (db
@@ -110,6 +122,9 @@ export default async function OrderDetailPage({
     : [];
   const canManage = hasPermission(user.id, "manage_orders");
   const canReview = hasPermission(user.id, "review_orders");
+  const treasuryStatus = canManage
+    ? await getTreasuryStatus()
+    : { configured: false, automaticEnabled: false };
   const unassignedUsers = canManage
     ? (db
         .prepare(
@@ -288,7 +303,9 @@ export default async function OrderDetailPage({
                 <div>
                   <p className="eyebrow">PAYMENT LEDGER</p>
                   <h2>
-                    {payment
+                    {payment?.method === "treasury"
+                      ? "Treasury payment"
+                      : payment
                       ? "Edit recorded payment"
                       : "Record manual payment"}
                   </h2>
@@ -361,12 +378,38 @@ export default async function OrderDetailPage({
                   />
                 </label>
                 <div className="inline-actions">
-                  <button className="button primary">
+                  <button
+                    className="button primary"
+                    disabled={payment?.method === "treasury"}
+                  >
                     {payment ? "Update payment" : "Mark paid"}
                   </button>
+                  {!payment && treasuryStatus.automaticEnabled && (
+                    <button
+                      className="button"
+                      formAction={payWithTreasury.bind(null, order.id)}
+                    >
+                      Pay through Treasury
+                    </button>
+                  )}
                 </div>
               </form>
-              {payment && (
+              {!payment && !treasuryStatus.automaticEnabled && (
+                <p className="form-help">
+                  Automatic transfer is off. An admin can enable it in the{" "}
+                  <Link href="/admin/treasury">Treasury settings</Link>.
+                </p>
+              )}
+              {payment?.method === "treasury" && (
+                <p className="form-help">
+                  Sent through Treasury
+                  {payment.external_reference
+                    ? ` · transaction ${payment.external_reference}`
+                    : ""}
+                  . External transfers cannot be undone from GreyHub.
+                </p>
+              )}
+              {payment && payment.method !== "treasury" && (
                 <ConfirmAction
                   action={markUnpaid.bind(null, order.id)}
                   label="Mark unpaid"
