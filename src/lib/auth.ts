@@ -7,7 +7,12 @@ import {
   restoreStoredAccounts,
   storedAccountForLogin,
 } from "@/lib/accounts";
-import { db, hasPermission, type Permission } from "@/lib/db";
+import {
+  db,
+  hasPermission,
+  isVisitorAccount,
+  type Permission,
+} from "@/lib/db";
 
 const COOKIE_NAME = "greyhub_session";
 const SESSION_DAYS = 90;
@@ -160,11 +165,23 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   };
 }
 
-export async function requireUser(permission?: Permission) {
+export async function requireAuthenticatedUser() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (user.status === "suspended") redirect("/suspended");
+  return user;
+}
+
+export async function requireUser(permission?: Permission) {
+  const user = await requireAuthenticatedUser();
+  if (isVisitorAccount(user)) redirect("/visitor");
   if (permission && !hasPermission(user.id, permission))
     redirect("/dashboard?error=forbidden");
+  return user;
+}
+
+export async function requireVisitor() {
+  const user = await requireAuthenticatedUser();
+  if (!isVisitorAccount(user)) redirect("/dashboard");
   return user;
 }

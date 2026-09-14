@@ -6,10 +6,16 @@ import { useState, type MouseEvent, type ReactNode } from "react";
 type AppShellProps = {
   navigation: ReactNode;
   unreadNotices: number;
+  visitorMode?: boolean;
   children: ReactNode;
 };
 
-export function AppShell({ navigation, unreadNotices, children }: AppShellProps) {
+export function AppShell({
+  navigation,
+  unreadNotices,
+  visitorMode = false,
+  children,
+}: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   function closeAfterNavigation(event: MouseEvent<HTMLElement>) {
@@ -35,7 +41,9 @@ export function AppShell({ navigation, unreadNotices, children }: AppShellProps)
             <strong>GreyHub</strong>
           </div>
 
-          <span className="station-label">GREY COMPANY · OPERATIONS BOARD</span>
+          <span className="station-label">
+            GREY COMPANY · {visitorMode ? "VISITOR DESK" : "OPERATIONS BOARD"}
+          </span>
 
           <button
             type="button"
@@ -48,9 +56,11 @@ export function AppShell({ navigation, unreadNotices, children }: AppShellProps)
             <i aria-hidden="true" />
           </button>
 
-          <Link href="/notifications" className="notification-link">
-            Notices {unreadNotices > 0 && <b>{unreadNotices}</b>}
-          </Link>
+          {!visitorMode && (
+            <Link href="/notifications" className="notification-link">
+              Notices {unreadNotices > 0 && <b>{unreadNotices}</b>}
+            </Link>
+          )}
         </header>
 
         <main className="content">{children}</main>

@@ -28,7 +28,9 @@ export default async function EmployeesPage() {
       COUNT(DISTINCT CASE WHEN order_workers.abandoned_at IS NULL AND orders.status IN ('claimed','in_progress','pending_review') THEN orders.id END) AS active_orders
     FROM users LEFT JOIN user_roles ON user_roles.user_id = users.id LEFT JOIN roles ON roles.id = user_roles.role_id
     LEFT JOIN order_workers ON order_workers.user_id = users.id LEFT JOIN orders ON orders.id = order_workers.order_id
-    GROUP BY users.id ORDER BY users.status DESC, users.username
+    GROUP BY users.id
+    HAVING SUM(CASE WHEN lower(roles.name) != 'visitor' THEN 1 ELSE 0 END) > 0
+    ORDER BY users.status DESC, users.username
   `,
     )
     .all() as Employee[];

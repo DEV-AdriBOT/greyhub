@@ -210,6 +210,7 @@ function ensureAdminAccount() {
         "manage_users",
       ]),
     );
+    roleInsert.run("Visitor", "[]");
     const adminRole = (
       db.prepare("SELECT id FROM roles WHERE name = 'Admin'").get() as {
         id: number;
@@ -233,6 +234,19 @@ function ensureAdminAccount() {
     );
     assignRole.run(adminId, adminRole);
 
+    const visitorRole = (
+      db.prepare("SELECT id FROM roles WHERE name = 'Visitor'").get() as {
+        id: number;
+      }
+    ).id;
+    db.prepare(
+      `INSERT OR IGNORE INTO user_roles (user_id, role_id)
+       SELECT users.id, ? FROM users
+       WHERE NOT EXISTS (
+         SELECT 1 FROM user_roles WHERE user_roles.user_id = users.id
+       )`,
+    ).run(visitorRole);
+
     if (process.env.VERCEL) {
       db.prepare(
         "UPDATE users SET profile_image = '/api/uploads/profiles/user-' || id",
@@ -251,6 +265,50 @@ export type Permission =
   | "manage_orders"
   | "review_orders"
   | "manage_users";
+
+export const VISITOR_ROLE_NAME = "Visitor";
+
+export function isVisitorAccount(user: { roles: string[] }) {
+  return (
+    user.roles.length === 0 ||
+    user.roles.every(
+      (role) => role.toLowerCase() === VISITOR_ROLE_NAME.toLowerCase(),
+    )
+  );
+}
+
+export function isVisitorUserId(userId: number) {
+  const roles = db
+    .prepare(
+      `SELECT roles.name FROM roles
+       JOIN user_roles ON user_roles.role_id = roles.id
+       WHERE user_roles.user_id = ?`,
+    )
+    .all(userId) as { name: string }[];
+  return isVisitorAccount({ roles: roles.map((role) => role.name) });
+}
+
+export function replaceUserRoles(userId: number, requestedRoleIds: number[]) {
+  const uniqueIds = [...new Set(requestedRoleIds.filter(Number.isInteger))];
+  const selected = uniqueIds.map((roleId) =>
+    db.prepare("SELECT id, name FROM roles WHERE id = ?").get(roleId),
+  ) as ({ id: number; name: string } | undefined)[];
+  const nonVisitor = selected.filter(
+    (role): role is { id: number; name: string } =>
+      role !== undefined &&
+      role.name.toLowerCase() !== VISITOR_ROLE_NAME.toLowerCase(),
+  );
+  const visitor = db
+    .prepare("SELECT id, name FROM roles WHERE name = ?")
+    .get(VISITOR_ROLE_NAME) as { id: number; name: string };
+  const roles = nonVisitor.length ? nonVisitor : [visitor];
+
+  db.prepare("DELETE FROM user_roles WHERE user_id = ?").run(userId);
+  const addRole = db.prepare(
+    "INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)",
+  );
+  for (const role of roles) addRole.run(userId, role.id);
+}
 
 export function hasPermission(userId: number, permission: Permission) {
   const rows = db

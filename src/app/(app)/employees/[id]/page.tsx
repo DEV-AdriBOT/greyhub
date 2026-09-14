@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import { StatusPill } from "@/components/status-pill";
 import { requireUser } from "@/lib/auth";
-import { db, hasPermission, orderCode } from "@/lib/db";
+import { db, hasPermission, orderCode, VISITOR_ROLE_NAME } from "@/lib/db";
 import { money, shortDate } from "@/lib/format";
 
 export default async function EmployeePage({
@@ -31,6 +31,13 @@ export default async function EmployeePage({
       }
     | undefined;
   if (!employee) notFound();
+  const canManage = hasPermission(viewer.id, "manage_users");
+  const employeeRoles = (employee.roles || "").split(",").filter(Boolean);
+  if (
+    !canManage &&
+    employeeRoles.every((role) => role === VISITOR_ROLE_NAME)
+  )
+    notFound();
   const stats = db
     .prepare(
       `SELECT SUM(CASE WHEN ow.abandoned_at IS NULL AND o.status IN ('claimed','in_progress','pending_review') THEN 1 ELSE 0 END) active, SUM(CASE WHEN ow.abandoned_at IS NOT NULL THEN 1 ELSE 0 END) abandoned FROM order_workers ow JOIN orders o ON o.id=ow.order_id WHERE ow.user_id=?`,
@@ -46,7 +53,6 @@ export default async function EmployeePage({
     status: string;
     completion_date: string | null;
   }[];
-  const canManage = hasPermission(viewer.id, "manage_users");
   return (
     <>
       <div className="breadcrumb">

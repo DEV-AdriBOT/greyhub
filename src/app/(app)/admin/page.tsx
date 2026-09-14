@@ -73,7 +73,7 @@ export default async function AdminPage({
       {query.error && <div className="flash flash-error">{query.error}</div>}
       <section className="metric-strip admin-metrics">
         <div>
-          <span>Employees</span>
+          <span>Accounts</span>
           <strong>{users.length}</strong>
         </div>
         <div>
@@ -167,7 +167,7 @@ export default async function AdminPage({
             <label>
               Starting role
               <select name="role_id">
-                <option value="">No role</option>
+                <option value="">Visitor (automatic)</option>
                 {roles.map((role) => (
                   <option key={role.id} value={role.id}>
                     {role.name}

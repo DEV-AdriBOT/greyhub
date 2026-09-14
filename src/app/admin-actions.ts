@@ -5,7 +5,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { persistAccount, storedAccountForLogin } from "@/lib/accounts";
 import { requireUser } from "@/lib/auth";
-import { addActivity, addNotification, db, type Permission } from "@/lib/db";
+import {
+  addActivity,
+  addNotification,
+  db,
+  replaceUserRoles,
+  VISITOR_ROLE_NAME,
+  type Permission,
+} from "@/lib/db";
 import { shouldSuspend } from "@/lib/rules";
 
 const allowedPermissions: Permission[] = [
@@ -72,10 +79,7 @@ export async function createUser(formData: FormData) {
         id,
       );
     }
-    if (roleId)
-      db.prepare(
-        "INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE id = ?",
-      ).run(id, roleId);
+    replaceUserRoles(id, roleId ? [roleId] : []);
     return id;
   })();
   try {
@@ -109,11 +113,7 @@ export async function updateUser(userId: number, formData: FormData) {
     db.prepare(
       "UPDATE users SET username = ?, status = ?, suspended_until = CASE WHEN ? = 'active' THEN NULL ELSE suspended_until END WHERE id = ?",
     ).run(username, status, status, userId);
-    db.prepare("DELETE FROM user_roles WHERE user_id = ?").run(userId);
-    const addRole = db.prepare(
-      "INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE id = ?",
-    );
-    for (const roleId of roleIds) addRole.run(userId, roleId);
+    replaceUserRoles(userId, roleIds);
   })();
   await persistAccount(userId);
   addActivity(admin.id, "user_updated", { userId, details: username });
@@ -212,6 +212,12 @@ export async function createRole(formData: FormData) {
 
 export async function updateRole(roleId: number, formData: FormData) {
   const admin = await requireUser("manage_users");
+  const current = db
+    .prepare("SELECT name FROM roles WHERE id = ?")
+    .get(roleId) as { name: string } | undefined;
+  if (!current) redirect("/admin/roles?error=Role+not+found");
+  if (current.name === VISITOR_ROLE_NAME)
+    redirect("/admin/roles?error=The+Visitor+role+is+managed+automatically");
   const name = String(formData.get("name") || "")
     .trim()
     .slice(0, 60);
@@ -236,8 +242,8 @@ export async function deleteRole(roleId: number) {
     | { name: string }
     | undefined;
   if (!role) redirect("/admin/roles?error=Role+not+found");
-  if (role.name === "Admin")
-    redirect("/admin/roles?error=The+default+Admin+role+cannot+be+deleted");
+  if (role.name === "Admin" || role.name === VISITOR_ROLE_NAME)
+    redirect("/admin/roles?error=That+default+role+cannot+be+deleted");
   const assigned = (
     db
       .prepare("SELECT COUNT(*) AS count FROM user_roles WHERE role_id = ?")

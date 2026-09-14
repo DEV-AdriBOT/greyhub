@@ -62,6 +62,7 @@ export async function createAd(formData: FormData) {
   }
   addActivity(admin.id, "ad_created", { details: title });
   revalidatePath("/dashboard");
+  revalidatePath("/visitor");
   revalidatePath("/admin/ads");
   redirect("/admin/ads?notice=Banner+published");
 }
@@ -72,6 +73,7 @@ export async function toggleAd(adId: string) {
   if (!ad) redirect("/admin/ads?error=Banner+not+found");
   addActivity(admin.id, "ad_toggled", { details: adId });
   revalidatePath("/dashboard");
+  revalidatePath("/visitor");
   revalidatePath("/admin/ads");
   redirect("/admin/ads?notice=Banner+status+updated");
 }
@@ -132,6 +134,7 @@ export async function updateAd(adId: string, formData: FormData) {
 
   addActivity(admin.id, "ad_updated", { details: title });
   revalidatePath("/dashboard");
+  revalidatePath("/visitor");
   revalidatePath("/admin/ads");
   redirect("/admin/ads?notice=Banner+updated");
 }
@@ -143,6 +146,7 @@ export async function deleteAd(adId: string) {
   await deleteUpload(ad.image_path);
   addActivity(admin.id, "ad_deleted", { details: adId });
   revalidatePath("/dashboard");
+  revalidatePath("/visitor");
   revalidatePath("/admin/ads");
   redirect("/admin/ads?notice=Banner+deleted");
 }

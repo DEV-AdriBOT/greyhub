@@ -1,8 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { get } from "@vercel/blob";
+import { listAds } from "@/lib/ads";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, isVisitorAccount } from "@/lib/db";
 import { uploadDirectory, type UploadKind } from "@/lib/uploads";
 
 export const runtime = "nodejs";
@@ -30,6 +31,17 @@ export async function GET(
     !/^(?:[a-f0-9-]+\.(?:jpe?g|png|webp|gif)|user-\d+)$/i.test(filename)
   ) {
     return new Response("Not found", { status: 404 });
+  }
+
+  if (isVisitorAccount(currentUser)) {
+    const requestedPath = `/api/uploads/${kind}/${filename}`;
+    const isOwnProfile =
+      kind === "profiles" && currentUser.profile_image === requestedPath;
+    const isActiveBanner =
+      kind === "ads" &&
+      (await listAds(true)).some((ad) => ad.image_path === requestedPath);
+    if (!isOwnProfile && !isActiveBanner)
+      return new Response("Forbidden", { status: 403 });
   }
 
   if (process.env.VERCEL) {

@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { chatMessagesAfter, createChatMessage } from "@/lib/chat";
+import { isVisitorAccount } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,8 @@ export async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user) return json({ error: "Unauthorized" }, 401);
   if (user.status === "suspended") return json({ error: "Suspended" }, 403);
+  if (isVisitorAccount(user))
+    return json({ error: "Visitors cannot use chat" }, 403);
 
   const afterValue = new URL(request.url).searchParams.get("after") || "0";
   const after = Number(afterValue);
@@ -29,6 +32,8 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return json({ error: "Unauthorized" }, 401);
   if (user.status === "suspended") return json({ error: "Suspended" }, 403);
+  if (isVisitorAccount(user))
+    return json({ error: "Visitors cannot use chat" }, 403);
 
   if (Number(request.headers.get("content-length") || 0) > 2_000) {
     return json({ error: "Message is too long" }, 413);

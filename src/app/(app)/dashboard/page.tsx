@@ -68,7 +68,14 @@ export default async function DashboardPage() {
     .all(...(manager ? [] : [user.id])) as OrderRow[];
 
   const employeeCount = (
-    db.prepare("SELECT COUNT(*) AS count FROM users").get() as { count: number }
+    db
+      .prepare(
+        `SELECT COUNT(DISTINCT users.id) AS count FROM users
+         JOIN user_roles ON user_roles.user_id = users.id
+         JOIN roles ON roles.id = user_roles.role_id
+         WHERE lower(roles.name) != 'visitor'`,
+      )
+      .get() as { count: number }
   ).count;
   const suspendedCount = (
     db

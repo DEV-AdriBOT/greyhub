@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createRole, deleteRole, updateRole } from "@/app/admin-actions";
 import { ConfirmAction } from "@/components/confirm-action";
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, VISITOR_ROLE_NAME } from "@/lib/db";
 import { titleCase } from "@/lib/format";
 
 const permissions = ["admin", "manage_orders", "review_orders", "manage_users"];
@@ -60,6 +60,7 @@ export default async function RolesPage({
         <div className="role-list">
           {roles.map((role) => {
             const selected = JSON.parse(role.permissions) as string[];
+            const automatic = role.name === VISITOR_ROLE_NAME;
             return (
               <details className="role-row" key={role.id}>
                 <summary>
@@ -72,22 +73,29 @@ export default async function RolesPage({
                         : "No management permissions"}
                     </small>
                   </div>
-                  <span>Edit</span>
+                  <span>{automatic ? "Automatic" : "Edit"}</span>
                 </summary>
-                <form
-                  action={updateRole.bind(null, role.id)}
-                  className="stack-form"
-                >
-                  <label>
-                    Role name
-                    <input name="name" defaultValue={role.name} required />
-                  </label>
-                  <PermissionBoxes selected={selected} />
-                  <div className="inline-actions">
-                    <button className="button">Save role</button>
-                  </div>
-                </form>
-                {role.name !== "Admin" && (
+                {automatic ? (
+                  <p className="help-text">
+                    Assigned automatically whenever a user has no employee,
+                    client, admin or other custom role.
+                  </p>
+                ) : (
+                  <form
+                    action={updateRole.bind(null, role.id)}
+                    className="stack-form"
+                  >
+                    <label>
+                      Role name
+                      <input name="name" defaultValue={role.name} required />
+                    </label>
+                    <PermissionBoxes selected={selected} />
+                    <div className="inline-actions">
+                      <button className="button">Save role</button>
+                    </div>
+                  </form>
+                )}
+                {role.name !== "Admin" && !automatic && (
                   <ConfirmAction
                     action={deleteRole.bind(null, role.id)}
                     label="Delete role"

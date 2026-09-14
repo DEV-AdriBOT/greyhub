@@ -1,5 +1,5 @@
 import { get, put } from "@vercel/blob";
-import { db } from "./db";
+import { db, replaceUserRoles } from "./db";
 
 export type StoredAccount = {
   id: number;
@@ -88,7 +88,7 @@ export function restoreStoredAccount(account: StoredAccount) {
       userId,
     );
 
-    db.prepare("DELETE FROM user_roles WHERE user_id = ?").run(userId);
+    const roleIds: number[] = [];
     for (const role of account.roles) {
       db.prepare(
         "INSERT OR IGNORE INTO roles (name, permissions) VALUES (?, ?)",
@@ -98,10 +98,9 @@ export function restoreStoredAccount(account: StoredAccount) {
           id: number;
         }
       ).id;
-      db.prepare(
-        "INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)",
-      ).run(userId, roleId);
+      roleIds.push(roleId);
     }
+    replaceUserRoles(userId, roleIds);
     return userId;
   })();
 }

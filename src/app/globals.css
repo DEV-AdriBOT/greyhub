@@ -1708,6 +1708,18 @@ select:focus {
   gap: 12px;
   margin-bottom: 24px;
 }
+.visitor-heading {
+  max-width: 720px;
+}
+.visitor-board {
+  display: grid;
+  gap: 16px;
+  max-width: 980px;
+}
+.visitor-board .empty-state {
+  min-height: 180px;
+  background: var(--panel);
+}
 .site-ad-link {
   display: block;
 }

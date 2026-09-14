@@ -56,6 +56,46 @@ describe("GreyHub database", () => {
           .get() as { count: number }
       ).count,
     ).toBe(1);
+    expect(
+      (
+        database
+          .prepare("SELECT COUNT(*) count FROM roles WHERE name = 'Visitor'")
+          .get() as { count: number }
+      ).count,
+    ).toBe(1);
+  });
+
+  it("uses Visitor as the fallback until another role is assigned", async () => {
+    const { restoreStoredAccount } = await import("./accounts");
+    const { isVisitorUserId, replaceUserRoles } = await import("./db");
+    restoreStoredAccount({
+      id: 78,
+      username: "waiting-user",
+      password_hash: bcrypt.hashSync("visitor-password", 10),
+      status: "active",
+      suspended_until: null,
+      joined_at: "2026-09-14T10:00:00.000Z",
+      roles: [],
+      updated_at: "2026-09-14T10:00:00.000Z",
+    });
+    expect(isVisitorUserId(78)).toBe(true);
+
+    const employeeRole = Number(
+      database
+        .prepare("INSERT INTO roles (name, permissions) VALUES ('Employee', '[]')")
+        .run().lastInsertRowid,
+    );
+    replaceUserRoles(78, [employeeRole]);
+    expect(isVisitorUserId(78)).toBe(false);
+    expect(
+      database
+        .prepare(
+          `SELECT roles.name FROM roles
+           JOIN user_roles ON user_roles.role_id = roles.id
+           WHERE user_roles.user_id = 78`,
+        )
+        .all(),
+    ).toEqual([{ name: "Employee" }]);
   });
 
   it("stores and reads crew chat messages", async () => {
